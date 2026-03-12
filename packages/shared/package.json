@@ -29,8 +29,5 @@
     "url": "https://github.com/Vankyle-Hub/storage-ts/issues"
   },
   "homepage": "https://github.com/Vankyle-Hub/storage-ts",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "packageManager": "pnpm@10.28.2"
 }

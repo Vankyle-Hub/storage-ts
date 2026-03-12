@@ -11,11 +11,9 @@ permissions:
   packages: write
 
 jobs:
-  publish:
+  publish-github:
+    name: Publish to GitHub Packages
     runs-on: ubuntu-latest
-    env:
-      NODE_AUTH_TOKEN: ${{ github.token }}
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -28,7 +26,7 @@ jobs:
       - name: Set up Node.js for GitHub Packages
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
           registry-url: https://npm.pkg.github.com
           scope: '@vankyle-hub'
@@ -39,5 +37,38 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Publish workspace packages
+      - name: Publish packages
         run: pnpm -r --filter "./packages/*" publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+
+  publish-npm:
+    name: Publish to npmjs.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+
+      - name: Set up Node.js for npmjs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+          scope: '@vankyle'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Publish packages as @vankyle
+        run: node scripts/publish-npmjs.mjs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

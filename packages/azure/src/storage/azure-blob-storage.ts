@@ -6,6 +6,7 @@ import {
   type BlobSASSignatureValues,
   type ContainerClient,
   type BlockBlobClient,
+  type BlockBlobParallelUploadOptions
 } from "@azure/storage-blob";
 import {
   StorageProvider,
@@ -86,7 +87,7 @@ export class AzureBlobStorage implements IStorage {
     const client = this.getBlockBlobClient(input.bucket, input.objectKey);
 
     if (input.body instanceof Uint8Array) {
-      const uploadOptions: import("@azure/storage-blob").BlockBlobParallelUploadOptions = {};
+      const uploadOptions: BlockBlobParallelUploadOptions = {};
       if (input.contentType) {
         uploadOptions.blobHTTPHeaders = { blobContentType: input.contentType };
       }
@@ -99,7 +100,7 @@ export class AzureBlobStorage implements IStorage {
     }
 
     const buffer = await streamToBuffer(input.body);
-    const uploadOptions: import("@azure/storage-blob").BlockBlobParallelUploadOptions = {};
+    const uploadOptions: BlockBlobParallelUploadOptions = {};
     if (input.contentType) {
       uploadOptions.blobHTTPHeaders = { blobContentType: input.contentType };
     }

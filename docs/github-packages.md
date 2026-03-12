@@ -1,10 +1,27 @@
-# GitHub Packages
+# Publishing
 
-This repository can publish its package workspaces to the GitHub Packages npm registry.
+This repository publishes its packages to **two** registries:
+
+| Registry | Scope | Packages |
+|---|---|---|
+| GitHub Packages | `@vankyle-hub` | `@vankyle-hub/storage-shared`, `@vankyle-hub/storage-core`, … |
+| npmjs.com | `@vankyle` | `@vankyle/storage-shared`, `@vankyle/storage-core`, … |
+
+GitHub Packages requires the npm scope to match the GitHub repository owner (`Vankyle-Hub`), so packages there use `@vankyle-hub`. On npmjs.com the preferred scope is `@vankyle`.
+
+## How it works
+
+The canonical package names in the repository are `@vankyle-hub/*`. When publishing to npmjs.com, the `scripts/publish-npmjs.mjs` script temporarily rewrites every `package.json`:
+
+1. Renames each package from `@vankyle-hub/*` to `@vankyle/*`.
+2. Resolves `workspace:*` dependencies to concrete version numbers.
+3. Sets `publishConfig.access` to `"public"`.
+4. Runs `npm publish --access public` per package.
+5. Restores the original `package.json`.
 
 ## Current package scope
 
-The published package names in this repository use the `@vankyle-hub` scope:
+The source-of-truth package names in this repository use the `@vankyle-hub` scope:
 
 - `@vankyle-hub/storage-shared`
 - `@vankyle-hub/storage-core`
@@ -38,10 +55,19 @@ GitHub Packages does not allow overwriting an existing package version. Before y
 
 ### 3. Publish through GitHub Actions
 
-Two workflows are included:
+Two publish targets are handled by a single workflow:
 
 - [.github/workflows/ci.yml](../.github/workflows/ci.yml) runs build, typecheck, and tests on pushes and pull requests.
-- [.github/workflows/publish-packages.yml](../.github/workflows/publish-packages.yml) publishes all workspace packages when a GitHub Release is published, or when you run it manually.
+- [.github/workflows/publish-packages.yml](../.github/workflows/publish-packages.yml) publishes to **both** GitHub Packages and npmjs.com when a GitHub Release is published, or when you run it manually.
+
+#### Required secrets
+
+| Secret | Where | Purpose |
+|---|---|---|
+| `GITHUB_TOKEN` | Automatic | Authenticates to GitHub Packages |
+| `NPM_TOKEN` | Repository secret | Authenticates to npmjs.com (`Automation` type token from npmjs.com) |
+
+To add the npm token: GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret** → name it `NPM_TOKEN`.
 
 Recommended release flow:
 
@@ -105,3 +131,13 @@ In a consumer repository GitHub Actions workflow:
 
 - All package installation commands in this repository assume the `@vankyle-hub` scope.
 - Public packages on GitHub Packages may still require registry configuration even when the package contents are publicly visible.
+
+## Consuming from npmjs.com
+
+Packages on npmjs.com use the `@vankyle` scope and are published with public access. No authentication is required:
+
+```bash
+pnpm add @vankyle/storage-core @vankyle/storage-shared
+pnpm add @vankyle/storage-s3
+pnpm add @vankyle/storage-kysely kysely
+```
