@@ -1,0 +1,44 @@
+name: Feature Request
+description: Propose a new capability or API improvement.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the user problem first, then the proposed API or behavior.
+
+  - type: input
+    id: package
+    attributes:
+      label: Relevant package
+      placeholder: core / s3 / azure / cloudflare / kysely / shared
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What use case or limitation are you trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the API, behavior, or design you want.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workarounds or alternatives have you evaluated?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add examples, links, or compatibility concerns.

@@ -1,0 +1,32 @@
+{
+  "name": "vankyle-storage",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Unified file and object storage infrastructure SDK for TypeScript.",
+  "scripts": {
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm exec vitest run",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vankyle-Hub/storage-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Vankyle-Hub/storage-ts/issues"
+  },
+  "homepage": "https://github.com/Vankyle-Hub/storage-ts",
+  "packageManager": "pnpm@10.28.2",
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "rimraf": "^6.1.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

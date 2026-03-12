@@ -1,0 +1,72 @@
+name: Bug Report
+description: Report a defect or behavioral regression.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug report. Please provide enough detail for maintainers to reproduce the problem.
+
+  - type: input
+    id: package
+    attributes:
+      label: Affected package
+      description: Which package is affected?
+      placeholder: core / s3 / azure / cloudflare / kysely / shared
+    validations:
+      required: true
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime
+      description: Which runtime are you using?
+      placeholder: Node.js 20, Cloudflare Workers, Bun, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Provide a minimal reproduction or precise steps.
+      placeholder: |
+        1. Configure S3Storage with ...
+        2. Call createUploadSession(...)
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or code
+      description: Paste stack traces, SQL errors, or code snippets if available.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues before opening this report.
+          required: true
+        - label: This is not a security vulnerability report.
+          required: true

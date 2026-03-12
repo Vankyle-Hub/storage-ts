@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/core" },
+    { "path": "./packages/s3" },
+    { "path": "./packages/azure" },
+    { "path": "./packages/cloudflare" },
+    { "path": "./packages/kysely" }
+  ]
+}

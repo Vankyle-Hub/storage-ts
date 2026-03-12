@@ -1,0 +1,42 @@
+{
+  "name": "@vankyle-hub/storage-azure",
+  "version": "0.1.0",
+  "description": "Azure Blob Storage and Cosmos DB adapters for vankyle-storage.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.json --force",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vankyle-Hub/storage-ts.git",
+    "directory": "packages/azure"
+  },
+  "bugs": {
+    "url": "https://github.com/Vankyle-Hub/storage-ts/issues"
+  },
+  "homepage": "https://github.com/Vankyle-Hub/storage-ts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "dependencies": {
+    "@vankyle-hub/storage-core": "workspace:*",
+    "@vankyle-hub/storage-shared": "workspace:*",
+    "@azure/storage-blob": "^12.31.0",
+    "@azure/cosmos": "^4.9.1"
+  }
+}

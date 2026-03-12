@@ -1,0 +1,21 @@
+export type { IStorage } from "./i-storage.js";
+export type {
+  StorageCapabilities,
+  PutObjectInput,
+  PutObjectResult,
+  GetObjectInput,
+  GetObjectResult,
+  HeadObjectInput,
+  HeadObjectResult,
+  DeleteObjectInput,
+  InitUploadSessionInput,
+  InitUploadSessionResult,
+  UploadPartInput,
+  UploadPartResult,
+  CompleteUploadSessionInput,
+  CompleteUploadSessionResult,
+  AbortUploadSessionInput,
+  CreateReadUrlInput,
+  CreatePutUrlInput,
+  CreateUploadPartUrlInput,
+} from "./storage.types.js";
