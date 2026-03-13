@@ -331,6 +331,7 @@ The public API for application code. Defined in `packages/core/src/ports/service
 ```typescript
 interface IStorageService {
   createUploadSession(req): Promise<CreateUploadSessionResponse>;
+  getUploadSession(sessionId): Promise<UploadSession | undefined>;
   getUploadPartUrl(req): Promise<SignedAccess>;
   uploadPart(req): Promise<UploadedPart>;        // server-proxied upload
   registerPart(req): Promise<UploadedPart>;      // client-direct upload confirmation
@@ -369,6 +370,8 @@ interface DefaultStorageServiceOptions {
 createUploadSession
   ├─ (multipart) initUploadSession → IStorage
   └─ (single)    createPutUrl?     → IStorage
+         ↓
+getUploadSession                               (optional — retrieve current state)
          ↓
 getUploadPartUrl / uploadPart / registerPart   (zero or more)
          ↓
