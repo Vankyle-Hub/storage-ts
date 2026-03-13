@@ -115,6 +115,10 @@ export class DefaultStorageService implements IStorageService {
     return { session, uploadUrl };
   }
 
+  async getUploadSession(sessionId: string): Promise<import("../../domain/models/upload-session.js").UploadSession | undefined> {
+    return this.metadata.uploads.getSession(sessionId);
+  }
+
   async getUploadPartUrl(request: GetUploadPartUrlRequest): Promise<SignedAccess> {
     const session = await this.requireSession(request.sessionId);
 

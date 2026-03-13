@@ -13,6 +13,7 @@ This guide walks through the most common usage patterns. For the full design rat
   - [Single file — client direct upload](#single-file--client-direct-upload)
   - [Multipart — client-direct parts](#multipart--client-direct-parts)
   - [Multipart — server-proxied parts](#multipart--server-proxied-parts)
+- [Retrieving an upload session](#retrieving-an-upload-session)
 - [Running database migrations](#running-database-migrations)
 
 ---
@@ -287,6 +288,29 @@ const part = await storageService.uploadPart({
 ```
 
 The rest of the flow (complete, register) is identical to the direct upload pattern.
+
+---
+
+## Retrieving an upload session
+
+Use `getUploadSession` to fetch the current state of an upload session. This is useful when the caller needs to recover the original `fileName`, `mimeType`, `expectedSize`, `expectedSha256`, or `metadata` that were provided at session creation time — for example, before calling `completeUploadSession` from a different request context.
+
+```typescript
+const session = await storageService.getUploadSession(sessionId);
+if (!session) {
+  // session not found
+}
+
+// Access all fields saved when the session was created:
+console.log(session.fileName);      // e.g. "photo.jpg"
+console.log(session.mimeType);      // e.g. "image/jpeg"
+console.log(session.expectedSize);  // declared size in bytes
+console.log(session.expectedSha256);// declared checksum
+console.log(session.metadata);      // application-defined metadata
+console.log(session.status);        // "pending" | "in-progress" | "completed" | "aborted"
+```
+
+Returns `undefined` when the session ID is not found.
 
 ---
 

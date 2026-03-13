@@ -75,6 +75,8 @@ export interface DeleteFileRequest {
 export interface IStorageService {
   createUploadSession(request: CreateUploadSessionRequest): Promise<CreateUploadSessionResponse>;
 
+  getUploadSession(sessionId: string): Promise<UploadSession | undefined>;
+
   getUploadPartUrl(request: GetUploadPartUrlRequest): Promise<SignedAccess>;
 
   uploadPart(request: UploadPartRequest): Promise<UploadedPart>;
