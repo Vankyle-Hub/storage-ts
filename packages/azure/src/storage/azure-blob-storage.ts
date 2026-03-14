@@ -286,7 +286,7 @@ export class AzureBlobStorage implements IStorage {
     const putSasValues: BlobSASSignatureValues = {
       containerName: input.bucket,
       blobName: input.objectKey,
-      permissions: BlobSASPermissions.parse("cw"),
+      permissions: BlobSASPermissions.parse("racw"),
       expiresOn: expiresAt,
     };
     if (input.contentType !== undefined) {
