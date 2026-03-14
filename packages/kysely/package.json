@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-kysely",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Kysely-based SQL metadata store for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",
