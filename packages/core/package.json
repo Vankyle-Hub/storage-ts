@@ -1,5 +1,5 @@
 {
-  "name": "@vankyle/storage-core",
+  "name": "@vankyle-hub/storage-core",
   "version": "0.2.1",
   "description": "Domain models, interfaces, and application services for vankyle-storage.",
   "type": "module",
@@ -31,7 +31,7 @@
   "homepage": "https://github.com/Vankyle-Hub/storage-ts",
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
-    "@vankyle/storage-shared": "0.2.0",
+    "@vankyle-hub/storage-shared": "workspace:*",
     "zod": "^4.3.6"
   },
   "publishConfig": {
