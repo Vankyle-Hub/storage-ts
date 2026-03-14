@@ -51,8 +51,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       kysely:
-        specifier: ^0.28.2
-        version: 0.28.11
+        specifier: ^0.28.12
+        version: 0.28.12
 
   packages/core:
     dependencies:
@@ -72,8 +72,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       kysely:
-        specifier: ^0.28.2
-        version: 0.28.11
+        specifier: ^0.28.12
+        version: 0.28.12
 
   packages/s3:
     dependencies:
@@ -990,8 +990,8 @@ packages:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
 
-  kysely@0.28.11:
-    resolution: {integrity: sha512-zpGIFg0HuoC893rIjYX1BETkVWdDnzTzF5e0kWXJFg5lE0k1/LfNWBejrcnOFu8Q2Rfq/hTDTU7XLUM8QOrpzg==}
+  kysely@0.28.12:
+    resolution: {integrity: sha512-kWiueDWXhbCchgiotwXkwdxZE/6h56IHAeFWg4euUfW0YsmO9sxbAxzx1KLLv2lox15EfuuxHQvgJ1qIfZuHGw==}
     engines: {node: '>=20.0.0'}
 
   lru-cache@11.2.6:
@@ -2491,7 +2491,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  kysely@0.28.11: {}
+  kysely@0.28.12: {}
 
   lru-cache@11.2.6: {}
 
