@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-core",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Domain models, interfaces, and application services for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",
