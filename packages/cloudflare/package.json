@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-cloudflare",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Cloudflare R2 Binding and D1 adapters for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",

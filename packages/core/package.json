@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-core",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Domain models, interfaces, and application services for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",
@@ -33,5 +33,8 @@
   "dependencies": {
     "@vankyle-hub/storage-shared": "workspace:*",
     "zod": "^4.3.6"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -23,6 +23,40 @@ const PACKAGES_DIR = "packages";
 const SCOPE_FROM = "@vankyle-hub/";
 const SCOPE_TO = "@vankyle/";
 
+/**
+ * Rewrites every .js and .d.ts file under `dist/` for the given package
+ * directory, replacing SCOPE_FROM with SCOPE_TO in import/require strings.
+ * Returns an array of { path, original } objects so callers can restore them.
+ *
+ * @param {string} dir  package directory name (relative to PACKAGES_DIR)
+ * @returns {{ path: string; original: string }[]}
+ */
+function rewriteDistFiles(dir) {
+  const distDir = join(PACKAGES_DIR, dir, "dist");
+  if (!existsSync(distDir)) return [];
+
+  /** @type {{ path: string; original: string }[]} */
+  const backed = [];
+
+  function walk(d) {
+    for (const entry of readdirSync(d, { withFileTypes: true })) {
+      const full = join(d, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.name.endsWith(".js") || entry.name.endsWith(".d.ts")) {
+        const original = readFileSync(full, "utf8");
+        if (original.includes(SCOPE_FROM)) {
+          writeFileSync(full, original.replaceAll(SCOPE_FROM, SCOPE_TO));
+          backed.push({ path: full, original });
+        }
+      }
+    }
+  }
+
+  walk(distDir);
+  return backed;
+}
+
 // ---------------------------------------------------------------------------
 // 1. Collect the version of every workspace package so we can resolve
 //    workspace:* references when rewriting dependencies.
@@ -80,6 +114,9 @@ for (const dir of packageDirs) {
 
   copyFileSync(pkgPath, backupPath);
 
+  /** @type {{ path: string; original: string }[]} */
+  let distBackups = [];
+
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
 
@@ -111,6 +148,11 @@ for (const dir of packageDirs) {
 
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 
+    // Rewrite @vankyle-hub/ → @vankyle/ in compiled dist files so that the
+    // published package resolves its imports against the npm scope, not the
+    // GitHub Packages scope stored in the source files.
+    distBackups = rewriteDistFiles(dir);
+
     console.log(`Publishing ${pkg.name}@${pkg.version} …`);
     execSync("npm publish --access public", {
       cwd: join(PACKAGES_DIR, dir),
@@ -121,8 +163,11 @@ for (const dir of packageDirs) {
     console.error(`✗ Failed to publish ${dir}: ${err.message}`);
     errors.push(dir);
   } finally {
-    // Always restore the original package.json
+    // Always restore the original package.json and any rewritten dist files.
     renameSync(backupPath, pkgPath);
+    for (const { path, original } of distBackups) {
+      writeFileSync(path, original);
+    }
   }
 }
 

@@ -332,6 +332,84 @@ describe("DefaultStorageService", () => {
     });
   });
 
+  describe("getUploadSession", () => {
+    it("should return the session when found", async () => {
+      const { service, metadata } = createService();
+
+      const mockSession = {
+        id: "session-42",
+        provider: StorageProvider.S3,
+        bucket: "test-bucket",
+        objectKey: "uploads/session-42.jpg",
+        mode: UploadMode.Single,
+        status: UploadSessionStatus.Pending,
+        fileName: "photo.jpg",
+        mimeType: "image/jpeg",
+        expectedSize: 204800,
+        expectedSha256: "abc123",
+        ownerId: "owner-1",
+        createdBy: "user-1",
+        metadata: { source: "mobile" },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        expiresAt: new Date(Date.now() + 3600_000),
+      };
+      (metadata.uploads.getSession as Mock).mockResolvedValue(mockSession);
+
+      const result = await service.getUploadSession("session-42");
+
+      expect(result).toBe(mockSession);
+      expect(metadata.uploads.getSession).toHaveBeenCalledWith("session-42");
+    });
+
+    it("should return undefined when session not found", async () => {
+      const { service, metadata } = createService();
+      (metadata.uploads.getSession as Mock).mockResolvedValue(undefined);
+
+      const result = await service.getUploadSession("not-exist");
+
+      expect(result).toBeUndefined();
+      expect(metadata.uploads.getSession).toHaveBeenCalledWith("not-exist");
+    });
+
+    it("should preserve all fields saved at creation time", async () => {
+      const { service, metadata } = createService();
+
+      const mockSession = {
+        id: "session-99",
+        provider: StorageProvider.S3,
+        bucket: "test-bucket",
+        objectKey: "uploads/session-99.mp4",
+        mode: UploadMode.Multipart,
+        status: UploadSessionStatus.InProgress,
+        fileName: "video.mp4",
+        mimeType: "video/mp4",
+        expectedSize: 1073741824,
+        expectedSha256: "deadbeef",
+        providerUploadId: "s3-upload-id",
+        ownerId: "owner-2",
+        createdBy: "user-2",
+        metadata: { folder: "videos", tags: ["promo"] },
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        updatedAt: new Date("2026-01-01T01:00:00Z"),
+        expiresAt: new Date("2026-01-01T02:00:00Z"),
+      };
+      (metadata.uploads.getSession as Mock).mockResolvedValue(mockSession);
+
+      const result = await service.getUploadSession("session-99");
+
+      expect(result?.fileName).toBe("video.mp4");
+      expect(result?.mimeType).toBe("video/mp4");
+      expect(result?.expectedSize).toBe(1073741824);
+      expect(result?.expectedSha256).toBe("deadbeef");
+      expect(result?.ownerId).toBe("owner-2");
+      expect(result?.createdBy).toBe("user-2");
+      expect(result?.metadata).toEqual({ folder: "videos", tags: ["promo"] });
+      expect(result?.status).toBe(UploadSessionStatus.InProgress);
+      expect(result?.providerUploadId).toBe("s3-upload-id");
+    });
+  });
+
   describe("getUploadPartUrl", () => {
     it("should return a signed URL for the part", async () => {
       const { service, storage, metadata } = createService();
