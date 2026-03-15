@@ -21,6 +21,7 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
     const now = new Date().toISOString();
     const doc: UploadSessionDoc = {
       id: input.id,
+      pk: input.id,
       type: "upload-session",
       provider: input.provider,
       bucket: input.bucket,
@@ -47,6 +48,7 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
 
   async getSession(id: string): Promise<UploadSession | undefined> {
     try {
+      // upload-session pk = id
       const { resource } = await this.container.item(id, id).read<UploadSessionDoc>();
       if (!resource || resource.type !== "upload-session") return undefined;
       return uploadSessionDocToModel(resource);
@@ -59,6 +61,7 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
     id: string,
     input: UpdateUploadSessionInput,
   ): Promise<UploadSession> {
+    // upload-session pk = id
     const { resource: existing } = await this.container.item(id, id).read<UploadSessionDoc>();
     if (!existing) {
       throw new Error(`UploadSession not found: ${id}`);
@@ -79,6 +82,7 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
     if (input.abortedAt !== undefined)
       updated.abortedAt = input.abortedAt.toISOString();
 
+    // upload-session pk = id
     const { resource } = await this.container.item(id, id).replace(updated);
     return uploadSessionDocToModel(resource as UploadSessionDoc);
   }
@@ -86,6 +90,7 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
   async addPart(input: CreateUploadedPartInput): Promise<UploadedPart> {
     const doc: UploadedPartDoc = {
       id: input.id,
+      pk: input.sessionId,
       type: "uploaded-part",
       sessionId: input.sessionId,
       partNumber: input.partNumber,
@@ -114,7 +119,8 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
       ],
     };
 
-    const { resources } = await this.container.items.query<UploadedPartDoc>(query).fetchAll();
+    // uploaded-part pk = sessionId — single-partition query
+    const { resources } = await this.container.items.query<UploadedPartDoc>(query, { partitionKey: sessionId }).fetchAll();
     if (resources.length === 0) return undefined;
     return uploadedPartDocToModel(resources[0]!);
   }
@@ -126,7 +132,8 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
       parameters: [{ name: "@sessionId", value: sessionId }],
     };
 
-    const { resources } = await this.container.items.query<UploadedPartDoc>(query).fetchAll();
+    // uploaded-part pk = sessionId — single-partition query
+    const { resources } = await this.container.items.query<UploadedPartDoc>(query, { partitionKey: sessionId }).fetchAll();
     return resources.map(uploadedPartDocToModel);
   }
 }

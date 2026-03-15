@@ -3,6 +3,7 @@ import type { File, FileVersion, FileStatus } from "@vankyle-hub/storage-core";
 
 export interface FileDoc {
   id: string;
+  pk: string;
   type: "file";
   ownerId?: string | undefined;
   displayName: string;
@@ -19,6 +20,7 @@ export interface FileDoc {
 
 export interface FileVersionDoc {
   id: string;
+  pk: string;
   type: "file-version";
   fileId: string;
   blobId: string;

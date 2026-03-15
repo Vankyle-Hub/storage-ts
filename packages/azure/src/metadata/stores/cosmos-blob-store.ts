@@ -21,6 +21,7 @@ export class CosmosBlobStore implements IBlobStore {
     const now = new Date().toISOString();
     const doc: BlobDoc = {
       id: input.id,
+      pk: input.id,
       type: "blob",
       provider: input.provider,
       bucket: input.bucket,
@@ -42,6 +43,7 @@ export class CosmosBlobStore implements IBlobStore {
 
   async getBlob(id: string): Promise<Blob | undefined> {
     try {
+      // blob pk = id
       const { resource } = await this.container.item(id, id).read<BlobDoc>();
       if (!resource || resource.type !== "blob") return undefined;
       return blobDocToModel(resource);
@@ -51,6 +53,7 @@ export class CosmosBlobStore implements IBlobStore {
   }
 
   async updateBlob(id: string, input: UpdateBlobInput): Promise<Blob> {
+    // blob pk = id
     const { resource: existing } = await this.container.item(id, id).read<BlobDoc>();
     if (!existing) {
       throw new Error(`Blob not found: ${id}`);
@@ -65,6 +68,7 @@ export class CosmosBlobStore implements IBlobStore {
     if (input.deletedAt !== undefined)
       updated.deletedAt = input.deletedAt.toISOString();
 
+    // blob pk = id
     const { resource } = await this.container.item(id, id).replace(updated);
     return blobDocToModel(resource as BlobDoc);
   }
@@ -107,6 +111,7 @@ export class CosmosBlobStore implements IBlobStore {
   async createReference(input: CreateBlobReferenceInput): Promise<BlobReference> {
     const doc: BlobReferenceDoc = {
       id: input.id,
+      pk: input.blobId,
       type: "blob-reference",
       blobId: input.blobId,
       refType: input.refType,
@@ -125,13 +130,27 @@ export class CosmosBlobStore implements IBlobStore {
       parameters: [{ name: "@blobId", value: blobId }],
     };
 
+    // blob-reference pk = blobId — single-partition query
     const { resources } = await this.container.items
-      .query<BlobReferenceDoc>(query)
+      .query<BlobReferenceDoc>(query, { partitionKey: blobId })
       .fetchAll();
     return resources.map(blobReferenceDocToModel);
   }
 
   async deleteReference(id: string): Promise<void> {
-    await this.container.item(id, id).delete();
+    // blob-reference pk = blobId — need to find the document first
+    const query = {
+      query:
+        "SELECT * FROM c WHERE c.id = @id AND c.type = 'blob-reference'",
+      parameters: [{ name: "@id", value: id }],
+    };
+
+    const { resources } = await this.container.items
+      .query<BlobReferenceDoc>(query)
+      .fetchAll();
+    if (resources.length === 0) return;
+
+    const doc = resources[0]!;
+    await this.container.item(doc.id, doc.pk).delete();
   }
 }

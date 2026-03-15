@@ -48,10 +48,12 @@ export interface RegisterPartRequest {
 
 export interface CompleteUploadSessionRequest {
   readonly sessionId: string;
+  readonly etag?: string | undefined;
   readonly createFile?: {
     readonly displayName: string;
     readonly ownerId?: string | undefined;
     readonly parentId?: string | undefined;
+    readonly mimeType?: string | undefined;
     readonly metadata?: JsonObject | undefined;
   } | undefined;
 }

@@ -21,6 +21,7 @@ export class CosmosFileStore implements IFileStore {
     const now = new Date().toISOString();
     const doc: FileDoc = {
       id: input.id,
+      pk: input.id,
       type: "file",
       ownerId: input.ownerId,
       displayName: input.displayName,
@@ -39,6 +40,7 @@ export class CosmosFileStore implements IFileStore {
 
   async getFile(id: string): Promise<File | undefined> {
     try {
+      // file pk = id
       const { resource } = await this.container.item(id, id).read<FileDoc>();
       if (!resource || resource.type !== "file") return undefined;
       return fileDocToModel(resource);
@@ -48,6 +50,7 @@ export class CosmosFileStore implements IFileStore {
   }
 
   async updateFile(id: string, input: UpdateFileInput): Promise<File> {
+    // file pk = id
     const { resource: existing } = await this.container.item(id, id).read<FileDoc>();
     if (!existing) {
       throw new Error(`File not found: ${id}`);
@@ -68,6 +71,7 @@ export class CosmosFileStore implements IFileStore {
       updated.deletedAt = input.deletedAt.toISOString();
     if (input.metadata !== undefined) updated.metadata = input.metadata;
 
+    // file pk = id
     const { resource } = await this.container.item(id, id).replace(updated);
     return fileDocToModel(resource as FileDoc);
   }
@@ -75,6 +79,7 @@ export class CosmosFileStore implements IFileStore {
   async createVersion(input: CreateFileVersionInput): Promise<FileVersion> {
     const doc: FileVersionDoc = {
       id: input.id,
+      pk: input.fileId,
       type: "file-version",
       fileId: input.fileId,
       blobId: input.blobId,
@@ -92,13 +97,17 @@ export class CosmosFileStore implements IFileStore {
   }
 
   async getVersion(id: string): Promise<FileVersion | undefined> {
-    try {
-      const { resource } = await this.container.item(id, id).read<FileVersionDoc>();
-      if (!resource || resource.type !== "file-version") return undefined;
-      return fileVersionDocToModel(resource);
-    } catch {
-      return undefined;
-    }
+    // file-version pk = fileId, unknown here — use cross-partition query
+    const query = {
+      query: "SELECT * FROM c WHERE c.id = @id AND c.type = 'file-version'",
+      parameters: [{ name: "@id", value: id }],
+    };
+
+    const { resources } = await this.container.items
+      .query<FileVersionDoc>(query)
+      .fetchAll();
+    if (resources.length === 0) return undefined;
+    return fileVersionDocToModel(resources[0]!);
   }
 
   async listVersions(fileId: string): Promise<FileVersion[]> {
@@ -108,8 +117,9 @@ export class CosmosFileStore implements IFileStore {
       parameters: [{ name: "@fileId", value: fileId }],
     };
 
+    // file-version pk = fileId — single-partition query
     const { resources } = await this.container.items
-      .query<FileVersionDoc>(query)
+      .query<FileVersionDoc>(query, { partitionKey: fileId })
       .fetchAll();
     return resources.map(fileVersionDocToModel);
   }
@@ -121,8 +131,9 @@ export class CosmosFileStore implements IFileStore {
       parameters: [{ name: "@fileId", value: fileId }],
     };
 
+    // file-version pk = fileId — single-partition query
     const { resources } = await this.container.items
-      .query<FileVersionDoc>(query)
+      .query<FileVersionDoc>(query, { partitionKey: fileId })
       .fetchAll();
     if (resources.length === 0) return undefined;
     return fileVersionDocToModel(resources[0]!);

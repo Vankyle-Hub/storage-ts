@@ -66,6 +66,60 @@ Azure Blob Storage does not have a native multipart upload API. `AzureBlobStorag
 
 All six entity types (`upload-session`, `uploaded-part`, `blob`, `blob-reference`, `file`, `file-version`) are stored in a **single Cosmos container**, discriminated by a `type` field.
 
+### Container setup
+
+The container **must** be created with partition key path **`/pk`**.
+
+Each document type uses a synthetic `pk` value that co-locates parent and child entities in the same logical partition:
+
+| Document type | `pk` value | Rationale |
+|---|---|---|
+| `file` | `id` | File is its own partition root |
+| `file-version` | `fileId` | Versions sit with their parent file |
+| `blob` | `id` | Blob is its own partition root |
+| `blob-reference` | `blobId` | References sit with their parent blob |
+| `upload-session` | `id` | Session is its own partition root |
+| `uploaded-part` | `sessionId` | Parts sit with their parent session |
+
+This design ensures that the most frequent queries (`listVersions`, `listParts`, `listReferences`) are single-partition operations.
+
+#### Creating the container manually
+
+If you need to create and pass in a `Container` object yourself:
+
+```typescript
+import { CosmosClient } from "@azure/cosmos";
+import { CosmosMetadataStore } from "@vankyle-hub/storage-azure";
+
+const client = new CosmosClient(connectionString);
+const { database } = await client.databases.createIfNotExists({ id: "my-database" });
+const { container } = await database.containers.createIfNotExists({
+  id: "storage",
+  partitionKey: { paths: ["/pk"] },
+});
+
+const metadata = new CosmosMetadataStore(container);
+```
+
+#### Using Bicep / ARM templates
+
+```bicep
+resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+  name: 'storage'
+  parent: cosmosDatabase
+  properties: {
+    resource: {
+      id: 'storage'
+      partitionKey: {
+        paths: ['/pk']
+        kind: 'Hash'
+        version: 2
+      }
+    }
+  }
+}
+```
+
 ### Setup
 
 ```typescript
@@ -85,7 +139,7 @@ const metadata = new CosmosMetadataStore({
 });
 ```
 
-The default container ID is `"storage"`. The container must exist before first use and must have `/id` as the partition key.
+The default container ID is `"storage"`. Pass `containerId` in options to override.
 
 ### Options reference
 
@@ -101,6 +155,7 @@ interface CosmosMetadataOptions {
   databaseId: string;
   /** Container ID — defaults to "storage" */
   containerId?: string;
+}
 }
 ```
 

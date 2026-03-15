@@ -3,6 +3,7 @@ import type { Blob, StorageProvider, BlobStatus, BlobReference } from "@vankyle-
 
 export interface BlobDoc {
   id: string;
+  pk: string;
   type: "blob";
   provider: string;
   bucket: string;
@@ -21,6 +22,7 @@ export interface BlobDoc {
 
 export interface BlobReferenceDoc {
   id: string;
+  pk: string;
   type: "blob-reference";
   blobId: string;
   refType: string;

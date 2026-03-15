@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-azure",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "Azure Blob Storage and Cosmos DB adapters for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",

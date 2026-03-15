@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-s3",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "S3-compatible object storage adapter for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",

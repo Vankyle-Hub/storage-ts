@@ -1,6 +1,6 @@
 {
   "name": "@vankyle-hub/storage-shared",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "Shared errors, utility types, and helpers for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",

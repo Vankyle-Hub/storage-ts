@@ -26,6 +26,7 @@ import { FileStatus } from "../../domain/enums/file-status.js";
 import { generateId } from "../../utils/ids.js";
 import type { IObjectKeyPolicy } from "../policies/object-key-policy.js";
 import { DefaultObjectKeyPolicy } from "../policies/object-key-policy.js";
+import { FileVersion } from "../../index.js";
 
 export interface DefaultStorageServiceOptions {
   readonly storage: IStorage;
@@ -92,7 +93,7 @@ export class DefaultStorageService implements IStorageService {
 
     const expiresAt = new Date(
       Date.now() +
-        (request.expiresInSeconds ?? this.defaultUploadExpiresInSeconds) * 1000,
+      (request.expiresInSeconds ?? this.defaultUploadExpiresInSeconds) * 1000,
     );
 
     const session = await this.metadata.uploads.createSession({
@@ -215,6 +216,18 @@ export class DefaultStorageService implements IStorageService {
       objectKey: session.objectKey,
     });
 
+    // Validate expected size and etag if provided
+    if (session.expectedSize !== undefined && head.contentLength !== session.expectedSize) {
+      throw new Error(
+        `Uploaded size mismatch: expected ${session.expectedSize}, got ${head.contentLength}`,
+      );
+    }
+    if (request.etag !== undefined && head.etag !== request.etag) {
+      throw new Error(
+        `Uploaded ETag mismatch: expected ${request.etag}, got ${head.etag}`,
+      );
+    }
+
     // Mark session completed
     const now = new Date();
     await this.metadata.uploads.updateSession(session.id, {
@@ -229,12 +242,12 @@ export class DefaultStorageService implements IStorageService {
       bucket: session.bucket,
       objectKey: session.objectKey,
       size: head.contentLength ?? 0,
-      mimeType: head.contentType ?? session.mimeType,
+      mimeType: session.mimeType ?? head.contentType,
       etag: etag ?? head.etag,
     });
 
-    let file: File | undefined;
-    let fileVersion: import("../../domain/models/file-version.js").FileVersion | undefined;
+    let file: File | undefined = undefined;
+    let fileVersion: FileVersion | undefined = undefined;
 
     if (request.createFile) {
       const fileId = generateId();
@@ -261,7 +274,7 @@ export class DefaultStorageService implements IStorageService {
         parentId: request.createFile.parentId,
         metadata: request.createFile.metadata,
       });
-
+      
       // Set current version
       file = await this.metadata.files.updateFile(file.id, {
         currentVersionId: versionId,

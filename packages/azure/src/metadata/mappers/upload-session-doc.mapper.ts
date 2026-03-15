@@ -9,6 +9,7 @@ import type {
 
 export interface UploadSessionDoc {
   id: string;
+  pk: string;
   type: "upload-session";
   provider: string;
   bucket: string;
@@ -33,6 +34,7 @@ export interface UploadSessionDoc {
 
 export interface UploadedPartDoc {
   id: string;
+  pk: string;
   type: "uploaded-part";
   sessionId: string;
   partNumber: number;

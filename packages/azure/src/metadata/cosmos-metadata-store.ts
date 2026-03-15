@@ -13,10 +13,9 @@ export class CosmosMetadataStore implements IMetadataStore {
   readonly files: CosmosFileStore;
 
   constructor(container: Container);
-  constructor(options: CosmosMetadataOptions, containerId?: string);
+  constructor(options: CosmosMetadataOptions);
   constructor(
     containerOrOptions: Container | CosmosMetadataOptions,
-    containerId?: string,
   ) {
     let container: Container;
 
@@ -41,7 +40,7 @@ export class CosmosMetadataStore implements IMetadataStore {
 
       container = client
         .database(options.databaseId)
-        .container(containerId ?? DEFAULT_CONTAINER_ID);
+        .container(options.containerId ?? DEFAULT_CONTAINER_ID);
     }
 
     this.uploads = new CosmosUploadSessionStore(container);
