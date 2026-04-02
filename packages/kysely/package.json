@@ -33,6 +33,6 @@
   "dependencies": {
     "@vankyle/storage-core": "workspace:*",
     "@vankyle/storage-shared": "workspace:*",
-    "kysely": "^0.28.12"
+    "kysely": "^0.28.15"
   }
 }
