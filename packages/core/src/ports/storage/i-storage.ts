@@ -1,5 +1,5 @@
-import type { StorageProvider } from "../../domain/enums/storage-provider.js";
-import type { SignedAccess } from "../../domain/value-objects/signed-access.js";
+import type { StorageProvider } from "@/domain/enums/storage-provider";
+import type { SignedAccess } from "@/domain/value-objects/signed-access";
 import type {
   StorageCapabilities,
   PutObjectInput,
@@ -19,7 +19,7 @@ import type {
   CreateReadUrlInput,
   CreatePutUrlInput,
   CreateUploadPartUrlInput,
-} from "./storage.types.js";
+} from "@/ports/storage/storage.types";
 
 export interface IStorage {
   readonly provider: StorageProvider;

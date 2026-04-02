@@ -1,6 +1,6 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { StorageProvider } from "../enums/storage-provider.js";
-import type { BlobStatus } from "../enums/blob-status.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { StorageProvider } from "@/domain/enums/storage-provider";
+import type { BlobStatus } from "@/domain/enums/blob-status";
 
 export interface Blob {
   readonly id: string;

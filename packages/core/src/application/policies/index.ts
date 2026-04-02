@@ -2,4 +2,4 @@ export {
   type IObjectKeyPolicy,
   type ObjectKeyPolicyInput,
   DefaultObjectKeyPolicy,
-} from "./object-key-policy.js";
+} from "@/application/policies/object-key-policy";

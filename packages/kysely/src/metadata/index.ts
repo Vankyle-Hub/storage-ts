@@ -1,4 +1,4 @@
-export { KyselyMetadataStore } from "./kysely-metadata-store.js";
-export { KyselyUploadSessionStore } from "./stores/kysely-upload-session-store.js";
-export { KyselyBlobStore } from "./stores/kysely-blob-store.js";
-export { KyselyFileStore } from "./stores/kysely-file-store.js";
+export { KyselyMetadataStore } from "@/metadata/kysely-metadata-store";
+export { KyselyUploadSessionStore } from "@/metadata/stores/kysely-upload-session-store";
+export { KyselyBlobStore } from "@/metadata/stores/kysely-blob-store";
+export { KyselyFileStore } from "@/metadata/stores/kysely-file-store";

@@ -4,12 +4,12 @@ import type {
   CreateFileInput,
   UpdateFileInput,
   CreateFileVersionInput,
-} from "@vankyle-hub/storage-core";
-import type { File, FileVersion } from "@vankyle-hub/storage-core";
-import { FileStatus } from "@vankyle-hub/storage-core";
-import type { StorageDatabase } from "../../schema/database.js";
-import { fileRowToModel } from "../../mappers/file-row.mapper.js";
-import { fileVersionRowToModel } from "../../mappers/file-version-row.mapper.js";
+} from "@vankyle/storage-core";
+import type { File, FileVersion } from "@vankyle/storage-core";
+import { FileStatus } from "@vankyle/storage-core";
+import type { StorageDatabase } from "@/schema/database";
+import { fileRowToModel } from "@/mappers/file-row.mapper";
+import { fileVersionRowToModel } from "@/mappers/file-version-row.mapper";
 
 export class KyselyFileStore implements IFileStore {
   constructor(private readonly db: Kysely<StorageDatabase>) {}

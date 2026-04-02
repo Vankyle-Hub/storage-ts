@@ -6,7 +6,7 @@ import {
   fileSchema,
   fileVersionSchema,
   blobReferenceSchema,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 
 describe("blobSchema", () => {
   const validBlob = {

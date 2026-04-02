@@ -4,15 +4,15 @@ import type {
   CreateFileInput,
   UpdateFileInput,
   CreateFileVersionInput,
-} from "@vankyle-hub/storage-core";
-import type { File, FileVersion } from "@vankyle-hub/storage-core";
-import { FileStatus } from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
+import type { File, FileVersion } from "@vankyle/storage-core";
+import { FileStatus } from "@vankyle/storage-core";
 import {
   type FileDoc,
   type FileVersionDoc,
   fileDocToModel,
   fileVersionDocToModel,
-} from "../mappers/file-doc.mapper.js";
+} from "@/metadata/mappers/file-doc.mapper";
 
 export class CosmosFileStore implements IFileStore {
   constructor(private readonly container: Container) {}

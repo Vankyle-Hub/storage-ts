@@ -1,6 +1,6 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { StorageProvider } from "../enums/storage-provider.js";
-import type { UploadMode, UploadSessionStatus } from "../enums/upload-status.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { StorageProvider } from "@/domain/enums/storage-provider";
+import type { UploadMode, UploadSessionStatus } from "@/domain/enums/upload-status";
 
 export interface UploadSession {
   readonly id: string;

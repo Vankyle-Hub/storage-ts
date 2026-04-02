@@ -4,12 +4,12 @@ import type {
   CreateUploadSessionInput,
   UpdateUploadSessionInput,
   CreateUploadedPartInput,
-} from "@vankyle-hub/storage-core";
-import type { UploadSession, UploadedPart } from "@vankyle-hub/storage-core";
-import { UploadSessionStatus } from "@vankyle-hub/storage-core";
-import type { StorageDatabase } from "../../schema/database.js";
-import { uploadSessionRowToModel } from "../../mappers/upload-session-row.mapper.js";
-import { uploadedPartRowToModel } from "../../mappers/uploaded-part-row.mapper.js";
+} from "@vankyle/storage-core";
+import type { UploadSession, UploadedPart } from "@vankyle/storage-core";
+import { UploadSessionStatus } from "@vankyle/storage-core";
+import type { StorageDatabase } from "@/schema/database";
+import { uploadSessionRowToModel } from "@/mappers/upload-session-row.mapper";
+import { uploadedPartRowToModel } from "@/mappers/uploaded-part-row.mapper";
 
 export class KyselyUploadSessionStore implements IUploadSessionStore {
   constructor(private readonly db: Kysely<StorageDatabase>) {}

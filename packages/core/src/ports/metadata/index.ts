@@ -1,19 +1,19 @@
-export type { IMetadataStore } from "./i-metadata-store.js";
+export type { IMetadataStore } from "@/ports/metadata/i-metadata-store";
 export type {
   IUploadSessionStore,
   CreateUploadSessionInput,
   UpdateUploadSessionInput,
   CreateUploadedPartInput,
-} from "./i-upload-session-store.js";
+} from "@/ports/metadata/i-upload-session-store";
 export type {
   IBlobStore,
   CreateBlobInput,
   UpdateBlobInput,
   CreateBlobReferenceInput,
-} from "./i-blob-store.js";
+} from "@/ports/metadata/i-blob-store";
 export type {
   IFileStore,
   CreateFileInput,
   UpdateFileInput,
   CreateFileVersionInput,
-} from "./i-file-store.js";
+} from "@/ports/metadata/i-file-store";

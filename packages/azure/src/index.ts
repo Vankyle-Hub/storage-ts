@@ -1,4 +1,4 @@
-export { AzureBlobStorage } from "./storage/index.js";
-export { CosmosMetadataStore } from "./metadata/index.js";
-export type { AzureBlobStorageOptions } from "./types/azure-options.js";
-export type { CosmosMetadataOptions } from "./types/cosmos-options.js";
+export { AzureBlobStorage } from "@/storage/index";
+export { CosmosMetadataStore } from "@/metadata/index";
+export type { AzureBlobStorageOptions } from "@/types/azure-options";
+export type { CosmosMetadataOptions } from "@/types/cosmos-options";

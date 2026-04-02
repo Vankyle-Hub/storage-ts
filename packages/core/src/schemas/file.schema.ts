@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FileStatus } from "../domain/enums/file-status.js";
+import { FileStatus } from "@/domain/enums/file-status";
 
 const jsonObjectSchema = z.record(z.string(), z.json());
 

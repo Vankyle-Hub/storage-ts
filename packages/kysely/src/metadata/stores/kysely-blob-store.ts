@@ -4,12 +4,12 @@ import type {
   CreateBlobInput,
   UpdateBlobInput,
   CreateBlobReferenceInput,
-} from "@vankyle-hub/storage-core";
-import type { Blob, BlobReference, StorageProvider } from "@vankyle-hub/storage-core";
-import { BlobStatus } from "@vankyle-hub/storage-core";
-import type { StorageDatabase } from "../../schema/database.js";
-import { blobRowToModel } from "../../mappers/blob-row.mapper.js";
-import { blobReferenceRowToModel } from "../../mappers/blob-reference-row.mapper.js";
+} from "@vankyle/storage-core";
+import type { Blob, BlobReference, StorageProvider } from "@vankyle/storage-core";
+import { BlobStatus } from "@vankyle/storage-core";
+import type { StorageDatabase } from "@/schema/database";
+import { blobRowToModel } from "@/mappers/blob-row.mapper";
+import { blobReferenceRowToModel } from "@/mappers/blob-reference-row.mapper";
 
 export class KyselyBlobStore implements IBlobStore {
   constructor(private readonly db: Kysely<StorageDatabase>) {}

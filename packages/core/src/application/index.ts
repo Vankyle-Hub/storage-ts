@@ -1,2 +1,2 @@
-export * from "./services/index.js";
-export * from "./policies/index.js";
+export * from "@/application/services/index";
+export * from "@/application/policies/index";

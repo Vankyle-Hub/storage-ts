@@ -1,7 +1,7 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { File } from "../../domain/models/file.js";
-import type { FileVersion } from "../../domain/models/file-version.js";
-import type { FileStatus } from "../../domain/enums/file-status.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { File } from "@/domain/models/file";
+import type { FileVersion } from "@/domain/models/file-version";
+import type { FileStatus } from "@/domain/enums/file-status";
 
 export interface CreateFileInput {
   readonly id: string;

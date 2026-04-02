@@ -1,3 +1,3 @@
-export * from "./enums/index.js";
-export * from "./models/index.js";
-export * from "./value-objects/index.js";
+export * from "@/domain/enums/index";
+export * from "@/domain/models/index";
+export * from "@/domain/value-objects/index";

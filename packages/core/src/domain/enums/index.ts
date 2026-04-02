@@ -1,4 +1,4 @@
-export { StorageProvider } from "./storage-provider.js";
-export { UploadMode, UploadSessionStatus } from "./upload-status.js";
-export { BlobStatus } from "./blob-status.js";
-export { FileStatus } from "./file-status.js";
+export { StorageProvider } from "@/domain/enums/storage-provider";
+export { UploadMode, UploadSessionStatus } from "@/domain/enums/upload-status";
+export { BlobStatus } from "@/domain/enums/blob-status";
+export { FileStatus } from "@/domain/enums/file-status";

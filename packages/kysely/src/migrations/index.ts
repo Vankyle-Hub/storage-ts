@@ -1,1 +1,1 @@
-export { up, down } from "./0001_init.js";
+export { up, down } from "@/migrations/0001_init";

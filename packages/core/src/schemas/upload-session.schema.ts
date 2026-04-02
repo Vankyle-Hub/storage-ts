@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { StorageProvider } from "../domain/enums/storage-provider.js";
-import { UploadMode, UploadSessionStatus } from "../domain/enums/upload-status.js";
+import { StorageProvider } from "@/domain/enums/storage-provider";
+import { UploadMode, UploadSessionStatus } from "@/domain/enums/upload-status";
 
 const jsonObjectSchema = z.record(z.string(), z.json());
 

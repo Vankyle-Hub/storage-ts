@@ -1,4 +1,4 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
+import type { JsonObject } from "@vankyle/storage-shared";
 
 export interface FileVersion {
   readonly id: string;

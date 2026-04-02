@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { assert, assertNever, getRequiredEnv, getOptionalEnv } from "@vankyle-hub/storage-shared";
+import { assert, assertNever, getRequiredEnv, getOptionalEnv } from "@vankyle/storage-shared";
 
 describe("assert", () => {
   it("should not throw when condition is truthy", () => {

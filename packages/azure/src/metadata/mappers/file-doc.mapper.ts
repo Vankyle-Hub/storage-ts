@@ -1,5 +1,5 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { File, FileVersion, FileStatus } from "@vankyle-hub/storage-core";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { File, FileVersion, FileStatus } from "@vankyle/storage-core";
 
 export interface FileDoc {
   id: string;

@@ -8,7 +8,7 @@ import {
   MetadataNotFoundError,
   MetadataConflictError,
   ValidationError,
-} from "@vankyle-hub/storage-shared";
+} from "@vankyle/storage-shared";
 
 describe("BaseError", () => {
   it("should set code and message", () => {

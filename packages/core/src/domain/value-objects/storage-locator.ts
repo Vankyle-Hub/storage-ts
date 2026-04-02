@@ -1,4 +1,4 @@
-import type { StorageProvider } from "../enums/storage-provider.js";
+import type { StorageProvider } from "@/domain/enums/storage-provider";
 
 export interface StorageLocator {
   readonly provider: StorageProvider;

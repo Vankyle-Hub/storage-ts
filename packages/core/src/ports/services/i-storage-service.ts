@@ -1,11 +1,11 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { UploadSession } from "../../domain/models/upload-session.js";
-import type { UploadedPart } from "../../domain/models/uploaded-part.js";
-import type { Blob } from "../../domain/models/blob.js";
-import type { File } from "../../domain/models/file.js";
-import type { FileVersion } from "../../domain/models/file-version.js";
-import type { SignedAccess } from "../../domain/value-objects/signed-access.js";
-import type { UploadMode } from "../../domain/enums/upload-status.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { UploadSession } from "@/domain/models/upload-session";
+import type { UploadedPart } from "@/domain/models/uploaded-part";
+import type { Blob } from "@/domain/models/blob";
+import type { File } from "@/domain/models/file";
+import type { FileVersion } from "@/domain/models/file-version";
+import type { SignedAccess } from "@/domain/value-objects/signed-access";
+import type { UploadMode } from "@/domain/enums/upload-status";
 
 // ── Service request/response DTOs ──
 

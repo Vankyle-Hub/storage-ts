@@ -32,13 +32,13 @@ import {
   type CreatePutUrlInput,
   type CreateUploadPartUrlInput,
   type SignedAccess,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 import {
   StorageError,
   StorageObjectNotFoundError,
-} from "@vankyle-hub/storage-shared";
-import type { S3StorageOptions } from "../types/s3-options.js";
-import { mapS3HeadToCore } from "../mappers/s3-head-to-core.js";
+} from "@vankyle/storage-shared";
+import type { S3StorageOptions } from "@/types/s3-options";
+import { mapS3HeadToCore } from "@/mappers/s3-head-to-core";
 
 const DEFAULT_EXPIRES_IN = 3600; // 1 hour
 

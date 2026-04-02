@@ -16,11 +16,11 @@ import {
   type CompleteUploadSessionInput,
   type CompleteUploadSessionResult,
   type AbortUploadSessionInput,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 import {
   StorageError,
   StorageObjectNotFoundError,
-} from "@vankyle-hub/storage-shared";
+} from "@vankyle/storage-shared";
 
 export class R2BindingStorage implements IStorage {
   readonly provider = StorageProvider.R2Binding;

@@ -1,4 +1,4 @@
-import { generateId } from "../../utils/ids.js";
+import { generateId } from "@/utils/ids";
 
 export interface ObjectKeyPolicyInput {
   readonly fileName?: string | undefined;

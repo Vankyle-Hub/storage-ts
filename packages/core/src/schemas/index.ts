@@ -1,6 +1,6 @@
-export { uploadSessionSchema, type UploadSessionInput } from "./upload-session.schema.js";
-export { uploadedPartSchema, type UploadedPartInput } from "./uploaded-part.schema.js";
-export { blobSchema, type BlobInput } from "./blob.schema.js";
-export { fileSchema, type FileInput } from "./file.schema.js";
-export { fileVersionSchema, type FileVersionInput } from "./file-version.schema.js";
-export { blobReferenceSchema, type BlobReferenceInput } from "./blob-reference.schema.js";
+export { uploadSessionSchema, type UploadSessionInput } from "@/schemas/upload-session.schema";
+export { uploadedPartSchema, type UploadedPartInput } from "@/schemas/uploaded-part.schema";
+export { blobSchema, type BlobInput } from "@/schemas/blob.schema";
+export { fileSchema, type FileInput } from "@/schemas/file.schema";
+export { fileVersionSchema, type FileVersionInput } from "@/schemas/file-version.schema";
+export { blobReferenceSchema, type BlobReferenceInput } from "@/schemas/blob-reference.schema";

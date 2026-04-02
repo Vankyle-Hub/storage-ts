@@ -1,4 +1,4 @@
-import { BaseError } from "./base-error.js";
+import { BaseError } from "@/errors/base-error";
 
 export class ValidationError extends BaseError {
   readonly field?: string | undefined;

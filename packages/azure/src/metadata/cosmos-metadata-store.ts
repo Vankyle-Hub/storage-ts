@@ -1,9 +1,9 @@
 import { CosmosClient, type Container } from "@azure/cosmos";
-import type { IMetadataStore } from "@vankyle-hub/storage-core";
-import type { CosmosMetadataOptions } from "../types/cosmos-options.js";
-import { CosmosUploadSessionStore } from "./stores/cosmos-upload-session-store.js";
-import { CosmosBlobStore } from "./stores/cosmos-blob-store.js";
-import { CosmosFileStore } from "./stores/cosmos-file-store.js";
+import type { IMetadataStore } from "@vankyle/storage-core";
+import type { CosmosMetadataOptions } from "@/types/cosmos-options";
+import { CosmosUploadSessionStore } from "@/metadata/stores/cosmos-upload-session-store";
+import { CosmosBlobStore } from "@/metadata/stores/cosmos-blob-store";
+import { CosmosFileStore } from "@/metadata/stores/cosmos-file-store";
 
 const DEFAULT_CONTAINER_ID = "storage";
 

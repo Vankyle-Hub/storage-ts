@@ -5,7 +5,7 @@ import {
   UploadSessionStatus,
   BlobStatus,
   FileStatus,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 
 describe("StorageProvider enum", () => {
   it("should have S3 value", () => {

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { StorageProvider } from "../domain/enums/storage-provider.js";
-import { BlobStatus } from "../domain/enums/blob-status.js";
+import { StorageProvider } from "@/domain/enums/storage-provider";
+import { BlobStatus } from "@/domain/enums/blob-status";
 
 const jsonObjectSchema = z.record(z.string(), z.json());
 

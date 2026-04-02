@@ -1,9 +1,9 @@
 import type { Kysely } from "kysely";
-import type { IMetadataStore } from "@vankyle-hub/storage-core";
-import type { StorageDatabase } from "../schema/database.js";
-import { KyselyUploadSessionStore } from "./stores/kysely-upload-session-store.js";
-import { KyselyBlobStore } from "./stores/kysely-blob-store.js";
-import { KyselyFileStore } from "./stores/kysely-file-store.js";
+import type { IMetadataStore } from "@vankyle/storage-core";
+import type { StorageDatabase } from "@/schema/database";
+import { KyselyUploadSessionStore } from "@/metadata/stores/kysely-upload-session-store";
+import { KyselyBlobStore } from "@/metadata/stores/kysely-blob-store";
+import { KyselyFileStore } from "@/metadata/stores/kysely-file-store";
 
 export class KyselyMetadataStore implements IMetadataStore {
   readonly uploads: KyselyUploadSessionStore;

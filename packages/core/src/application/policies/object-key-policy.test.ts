@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { DefaultObjectKeyPolicy } from "@vankyle-hub/storage-core";
+import { DefaultObjectKeyPolicy } from "@vankyle/storage-core";
 
 describe("DefaultObjectKeyPolicy", () => {
   const policy = new DefaultObjectKeyPolicy();

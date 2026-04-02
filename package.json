@@ -1,7 +1,7 @@
 {
   "name": "vankyle-storage",
   "private": true,
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Unified file and object storage infrastructure SDK for TypeScript.",
   "scripts": {
     "build": "pnpm -r build",
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^25.5.0",
     "rimraf": "^6.1.3",
+    "tsc-alias": "^1.8.10",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"

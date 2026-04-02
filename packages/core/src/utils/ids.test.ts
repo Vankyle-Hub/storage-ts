@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateId } from "@vankyle-hub/storage-core";
+import { generateId } from "@vankyle/storage-core";
 
 describe("generateId", () => {
   it("should return a valid UUID v4 format", () => {

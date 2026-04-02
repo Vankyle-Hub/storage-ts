@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ok, err } from "@vankyle-hub/storage-shared";
-import type { Result } from "@vankyle-hub/storage-shared";
+import { ok, err } from "@vankyle/storage-shared";
+import type { Result } from "@vankyle/storage-shared";
 
 describe("Result type", () => {
   it("ok() should create a success result", () => {

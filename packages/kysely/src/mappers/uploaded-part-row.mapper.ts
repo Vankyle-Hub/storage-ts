@@ -1,7 +1,7 @@
-import type { UploadedPart } from "@vankyle-hub/storage-core";
-import type { JsonObject } from "@vankyle-hub/storage-shared";
+import type { UploadedPart } from "@vankyle/storage-core";
+import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
-import type { UploadedPartsTable } from "../schema/database.js";
+import type { UploadedPartsTable } from "@/schema/database";
 
 type UploadedPartRow = Selectable<UploadedPartsTable>;
 

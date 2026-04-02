@@ -1,9 +1,9 @@
-export { KyselyMetadataStore } from "./metadata/index.js";
+export { KyselyMetadataStore } from "@/metadata/index";
 export {
   KyselyUploadSessionStore,
   KyselyBlobStore,
   KyselyFileStore,
-} from "./metadata/stores/index.js";
+} from "@/metadata/stores/index";
 export type {
   StorageDatabase,
   UploadSessionsTable,
@@ -12,5 +12,5 @@ export type {
   BlobReferencesTable,
   FilesTable,
   FileVersionsTable,
-} from "./schema/index.js";
-export * as migrations from "./migrations/index.js";
+} from "@/schema/index";
+export * as migrations from "@/migrations/index";

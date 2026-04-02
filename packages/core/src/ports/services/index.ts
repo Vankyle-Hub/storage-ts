@@ -9,4 +9,4 @@ export type {
   CompleteUploadSessionResponse,
   GetReadUrlRequest,
   DeleteFileRequest,
-} from "./i-storage-service.js";
+} from "@/ports/services/i-storage-service";

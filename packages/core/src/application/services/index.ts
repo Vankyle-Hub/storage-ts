@@ -1,1 +1,1 @@
-export { DefaultStorageService, type DefaultStorageServiceOptions } from "./default-storage-service.js";
+export { DefaultStorageService, type DefaultStorageServiceOptions } from "@/application/services/default-storage-service";

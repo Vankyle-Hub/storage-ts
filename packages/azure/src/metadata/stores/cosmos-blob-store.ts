@@ -4,15 +4,15 @@ import type {
   CreateBlobInput,
   UpdateBlobInput,
   CreateBlobReferenceInput,
-} from "@vankyle-hub/storage-core";
-import type { Blob, BlobReference, StorageProvider } from "@vankyle-hub/storage-core";
-import { BlobStatus } from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
+import type { Blob, BlobReference, StorageProvider } from "@vankyle/storage-core";
+import { BlobStatus } from "@vankyle/storage-core";
 import {
   type BlobDoc,
   type BlobReferenceDoc,
   blobDocToModel,
   blobReferenceDocToModel,
-} from "../mappers/blob-doc.mapper.js";
+} from "@/metadata/mappers/blob-doc.mapper";
 
 export class CosmosBlobStore implements IBlobStore {
   constructor(private readonly container: Container) {}

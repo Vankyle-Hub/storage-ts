@@ -30,12 +30,12 @@ import {
   type CreatePutUrlInput,
   type SignedAccess,
   generateId,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 import {
   StorageError,
   StorageObjectNotFoundError,
-} from "@vankyle-hub/storage-shared";
-import type { AzureBlobStorageOptions } from "../types/azure-options.js";
+} from "@vankyle/storage-shared";
+import type { AzureBlobStorageOptions } from "@/types/azure-options";
 
 const DEFAULT_EXPIRES_IN = 3600;
 

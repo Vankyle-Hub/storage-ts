@@ -4,15 +4,15 @@ import type {
   CreateUploadSessionInput,
   UpdateUploadSessionInput,
   CreateUploadedPartInput,
-} from "@vankyle-hub/storage-core";
-import type { UploadSession, UploadedPart } from "@vankyle-hub/storage-core";
-import { UploadSessionStatus } from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
+import type { UploadSession, UploadedPart } from "@vankyle/storage-core";
+import { UploadSessionStatus } from "@vankyle/storage-core";
 import {
   type UploadSessionDoc,
   type UploadedPartDoc,
   uploadSessionDocToModel,
   uploadedPartDocToModel,
-} from "../mappers/upload-session-doc.mapper.js";
+} from "@/metadata/mappers/upload-session-doc.mapper";
 
 export class CosmosUploadSessionStore implements IUploadSessionStore {
   constructor(private readonly container: Container) {}

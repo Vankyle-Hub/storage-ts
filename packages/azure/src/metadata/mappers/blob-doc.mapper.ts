@@ -1,5 +1,5 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { Blob, StorageProvider, BlobStatus, BlobReference } from "@vankyle-hub/storage-core";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { Blob, StorageProvider, BlobStatus, BlobReference } from "@vankyle/storage-core";
 
 export interface BlobDoc {
   id: string;

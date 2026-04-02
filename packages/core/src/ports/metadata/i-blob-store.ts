@@ -1,8 +1,8 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { Blob } from "../../domain/models/blob.js";
-import type { BlobReference } from "../../domain/models/blob-reference.js";
-import type { BlobStatus } from "../../domain/enums/blob-status.js";
-import type { StorageProvider } from "../../domain/enums/storage-provider.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { Blob } from "@/domain/models/blob";
+import type { BlobReference } from "@/domain/models/blob-reference";
+import type { BlobStatus } from "@/domain/enums/blob-status";
+import type { StorageProvider } from "@/domain/enums/storage-provider";
 
 export interface CreateBlobInput {
   readonly id: string;

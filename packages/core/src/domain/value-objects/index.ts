@@ -1,2 +1,2 @@
-export type { SignedAccess } from "./signed-access.js";
-export type { StorageLocator } from "./storage-locator.js";
+export type { SignedAccess } from "@/domain/value-objects/signed-access";
+export type { StorageLocator } from "@/domain/value-objects/storage-locator";

@@ -3,16 +3,16 @@ export {
   type UploadedPartDoc,
   uploadSessionDocToModel,
   uploadedPartDocToModel,
-} from "./upload-session-doc.mapper.js";
+} from "@/metadata/mappers/upload-session-doc.mapper";
 export {
   type BlobDoc,
   type BlobReferenceDoc,
   blobDocToModel,
   blobReferenceDocToModel,
-} from "./blob-doc.mapper.js";
+} from "@/metadata/mappers/blob-doc.mapper";
 export {
   type FileDoc,
   type FileVersionDoc,
   fileDocToModel,
   fileVersionDocToModel,
-} from "./file-doc.mapper.js";
+} from "@/metadata/mappers/file-doc.mapper";

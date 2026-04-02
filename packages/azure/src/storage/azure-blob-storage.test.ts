@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { AzureBlobStorage } from "./azure-blob-storage.js";
+import { AzureBlobStorage } from "@/storage/azure-blob-storage";
 
 describe("AzureBlobStorage", () => {
   describe("createPutUrl", () => {

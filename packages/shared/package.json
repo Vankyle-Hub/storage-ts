@@ -1,6 +1,6 @@
 {
-  "name": "@vankyle-hub/storage-shared",
-  "version": "0.2.7",
+  "name": "@vankyle/storage-shared",
+  "version": "0.2.8",
   "description": "Shared errors, utility types, and helpers for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b tsconfig.json --force",
+    "build": "tsc -b tsconfig.json --force && tsc-alias -p tsconfig.json",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

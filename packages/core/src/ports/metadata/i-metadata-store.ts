@@ -1,6 +1,6 @@
-import type { IUploadSessionStore } from "./i-upload-session-store.js";
-import type { IBlobStore } from "./i-blob-store.js";
-import type { IFileStore } from "./i-file-store.js";
+import type { IUploadSessionStore } from "@/ports/metadata/i-upload-session-store";
+import type { IBlobStore } from "@/ports/metadata/i-blob-store";
+import type { IFileStore } from "@/ports/metadata/i-file-store";
 
 export interface IMetadataStore {
   readonly uploads: IUploadSessionStore;

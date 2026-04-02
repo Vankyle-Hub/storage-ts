@@ -1,4 +1,4 @@
-export type { IStorage } from "./i-storage.js";
+export type { IStorage } from "@/ports/storage/i-storage";
 export type {
   StorageCapabilities,
   PutObjectInput,
@@ -18,4 +18,4 @@ export type {
   CreateReadUrlInput,
   CreatePutUrlInput,
   CreateUploadPartUrlInput,
-} from "./storage.types.js";
+} from "@/ports/storage/storage.types";

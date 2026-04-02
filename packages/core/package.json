@@ -1,6 +1,6 @@
 {
-  "name": "@vankyle-hub/storage-core",
-  "version": "0.2.7",
+  "name": "@vankyle/storage-core",
+  "version": "0.2.8",
   "description": "Domain models, interfaces, and application services for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b tsconfig.json --force",
+    "build": "tsc -b tsconfig.json --force && tsc-alias -p tsconfig.json",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -31,7 +31,7 @@
   "homepage": "https://github.com/Vankyle-Hub/storage-ts",
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
-    "@vankyle-hub/storage-shared": "workspace:*",
+    "@vankyle/storage-shared": "workspace:*",
     "zod": "^4.3.6"
   },
   "publishConfig": {

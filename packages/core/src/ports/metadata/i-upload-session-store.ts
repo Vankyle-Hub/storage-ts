@@ -1,8 +1,8 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { UploadSession } from "../../domain/models/upload-session.js";
-import type { UploadedPart } from "../../domain/models/uploaded-part.js";
-import type { UploadMode, UploadSessionStatus } from "../../domain/enums/upload-status.js";
-import type { StorageProvider } from "../../domain/enums/storage-provider.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { UploadSession } from "@/domain/models/upload-session";
+import type { UploadedPart } from "@/domain/models/uploaded-part";
+import type { UploadMode, UploadSessionStatus } from "@/domain/enums/upload-status";
+import type { StorageProvider } from "@/domain/enums/storage-provider";
 
 export interface CreateUploadSessionInput {
   readonly id: string;

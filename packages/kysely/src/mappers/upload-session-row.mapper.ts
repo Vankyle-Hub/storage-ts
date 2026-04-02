@@ -1,9 +1,9 @@
-import type { UploadSession } from "@vankyle-hub/storage-core";
-import type { StorageProvider } from "@vankyle-hub/storage-core";
-import type { UploadMode, UploadSessionStatus } from "@vankyle-hub/storage-core";
-import type { JsonObject } from "@vankyle-hub/storage-shared";
+import type { UploadSession } from "@vankyle/storage-core";
+import type { StorageProvider } from "@vankyle/storage-core";
+import type { UploadMode, UploadSessionStatus } from "@vankyle/storage-core";
+import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
-import type { UploadSessionsTable } from "../schema/database.js";
+import type { UploadSessionsTable } from "@/schema/database";
 
 type UploadSessionRow = Selectable<UploadSessionsTable>;
 

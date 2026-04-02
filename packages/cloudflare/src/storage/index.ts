@@ -1,1 +1,1 @@
-export { R2BindingStorage } from "./r2-binding-storage.js";
+export { R2BindingStorage } from "@/storage/r2-binding-storage";

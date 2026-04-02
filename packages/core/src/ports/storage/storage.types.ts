@@ -1,5 +1,5 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { UploadedPart } from "../../domain/models/uploaded-part.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { UploadedPart } from "@/domain/models/uploaded-part";
 
 // ── Capabilities ──
 

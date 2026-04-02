@@ -1,11 +1,11 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
+import type { JsonObject } from "@vankyle/storage-shared";
 import type {
   UploadSession,
   UploadedPart,
   StorageProvider,
   UploadMode,
   UploadSessionStatus,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 
 export interface UploadSessionDoc {
   id: string;

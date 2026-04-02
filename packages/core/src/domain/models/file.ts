@@ -1,5 +1,5 @@
-import type { JsonObject } from "@vankyle-hub/storage-shared";
-import type { FileStatus } from "../enums/file-status.js";
+import type { JsonObject } from "@vankyle/storage-shared";
+import type { FileStatus } from "@/domain/enums/file-status";
 
 export interface File {
   readonly id: string;

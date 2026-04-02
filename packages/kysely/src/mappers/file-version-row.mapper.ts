@@ -1,7 +1,7 @@
-import type { FileVersion } from "@vankyle-hub/storage-core";
-import type { JsonObject } from "@vankyle-hub/storage-shared";
+import type { FileVersion } from "@vankyle/storage-core";
+import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
-import type { FileVersionsTable } from "../schema/database.js";
+import type { FileVersionsTable } from "@/schema/database";
 
 type FileVersionRow = Selectable<FileVersionsTable>;
 

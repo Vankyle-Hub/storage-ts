@@ -1,6 +1,6 @@
-import type { BlobReference } from "@vankyle-hub/storage-core";
+import type { BlobReference } from "@vankyle/storage-core";
 import type { Selectable } from "kysely";
-import type { BlobReferencesTable } from "../schema/database.js";
+import type { BlobReferencesTable } from "@/schema/database";
 
 type BlobReferenceRow = Selectable<BlobReferencesTable>;
 

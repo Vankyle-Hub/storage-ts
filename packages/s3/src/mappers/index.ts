@@ -1,1 +1,1 @@
-export { mapS3HeadToCore } from "./s3-head-to-core.js";
+export { mapS3HeadToCore } from "@/mappers/s3-head-to-core";

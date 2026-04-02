@@ -1,6 +1,6 @@
-export type { UploadSession } from "./upload-session.js";
-export type { UploadedPart } from "./uploaded-part.js";
-export type { Blob } from "./blob.js";
-export type { File } from "./file.js";
-export type { FileVersion } from "./file-version.js";
-export type { BlobReference } from "./blob-reference.js";
+export type { UploadSession } from "@/domain/models/upload-session";
+export type { UploadedPart } from "@/domain/models/uploaded-part";
+export type { Blob } from "@/domain/models/blob";
+export type { File } from "@/domain/models/file";
+export type { FileVersion } from "@/domain/models/file-version";
+export type { BlobReference } from "@/domain/models/blob-reference";

@@ -1,4 +1,4 @@
-import { BaseError } from "./base-error.js";
+import { BaseError } from "@/errors/base-error";
 
 export class MetadataError extends BaseError {
   constructor(message: string, options?: { cause?: unknown }) {

@@ -1,7 +1,7 @@
-import type { Blob, StorageProvider, BlobStatus } from "@vankyle-hub/storage-core";
-import type { JsonObject } from "@vankyle-hub/storage-shared";
+import type { Blob, StorageProvider, BlobStatus } from "@vankyle/storage-core";
+import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
-import type { BlobsTable } from "../schema/database.js";
+import type { BlobsTable } from "@/schema/database";
 
 type BlobRow = Selectable<BlobsTable>;
 

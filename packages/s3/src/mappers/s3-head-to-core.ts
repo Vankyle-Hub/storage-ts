@@ -1,5 +1,5 @@
 import type { HeadObjectCommandOutput } from "@aws-sdk/client-s3";
-import type { HeadObjectResult } from "@vankyle-hub/storage-core";
+import type { HeadObjectResult } from "@vankyle/storage-core";
 
 export function mapS3HeadToCore(output: HeadObjectCommandOutput): HeadObjectResult {
   return {

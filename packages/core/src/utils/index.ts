@@ -1,1 +1,1 @@
-export { generateId } from "./ids.js";
+export { generateId } from "@/utils/ids";

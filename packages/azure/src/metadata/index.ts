@@ -1,4 +1,4 @@
-export { CosmosMetadataStore } from "./cosmos-metadata-store.js";
-export { CosmosUploadSessionStore } from "./stores/cosmos-upload-session-store.js";
-export { CosmosBlobStore } from "./stores/cosmos-blob-store.js";
-export { CosmosFileStore } from "./stores/cosmos-file-store.js";
+export { CosmosMetadataStore } from "@/metadata/cosmos-metadata-store";
+export { CosmosUploadSessionStore } from "@/metadata/stores/cosmos-upload-session-store";
+export { CosmosBlobStore } from "@/metadata/stores/cosmos-blob-store";
+export { CosmosFileStore } from "@/metadata/stores/cosmos-file-store";

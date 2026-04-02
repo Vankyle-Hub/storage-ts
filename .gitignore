@@ -6,3 +6,5 @@ dist
 coverage
 *.log
 tsconfig.tsbuildinfo
+.claude
+CLAUDE.md

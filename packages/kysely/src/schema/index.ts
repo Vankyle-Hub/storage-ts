@@ -6,4 +6,4 @@ export type {
   BlobReferencesTable,
   FilesTable,
   FileVersionsTable,
-} from "./database.js";
+} from "@/schema/database";

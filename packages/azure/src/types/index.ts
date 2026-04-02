@@ -1,2 +1,2 @@
-export type { AzureBlobStorageOptions } from "./azure-options.js";
-export type { CosmosMetadataOptions } from "./cosmos-options.js";
+export type { AzureBlobStorageOptions } from "@/types/azure-options";
+export type { CosmosMetadataOptions } from "@/types/cosmos-options";

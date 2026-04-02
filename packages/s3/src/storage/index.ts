@@ -1,1 +1,1 @@
-export { S3Storage } from "./s3-storage.js";
+export { S3Storage } from "@/storage/s3-storage";

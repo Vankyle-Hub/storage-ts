@@ -1,3 +1,3 @@
-export * from "./storage/index.js";
-export * from "./metadata/index.js";
-export * from "./services/index.js";
+export * from "@/ports/storage/index";
+export * from "@/ports/metadata/index";
+export * from "@/ports/services/index";

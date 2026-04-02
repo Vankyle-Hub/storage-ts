@@ -1,9 +1,9 @@
 import {
   CapabilityNotSupportedError,
   MetadataNotFoundError,
-} from "@vankyle-hub/storage-shared";
-import type { IStorage } from "../../ports/storage/i-storage.js";
-import type { IMetadataStore } from "../../ports/metadata/i-metadata-store.js";
+} from "@vankyle/storage-shared";
+import type { IStorage } from "@/ports/storage/i-storage";
+import type { IMetadataStore } from "@/ports/metadata/i-metadata-store";
 import type {
   IStorageService,
   CreateUploadSessionRequest,
@@ -15,18 +15,19 @@ import type {
   CompleteUploadSessionResponse,
   GetReadUrlRequest,
   DeleteFileRequest,
-} from "../../ports/services/i-storage-service.js";
-import type { UploadedPart } from "../../domain/models/uploaded-part.js";
-import type { Blob as StorageBlob } from "../../domain/models/blob.js";
-import type { File } from "../../domain/models/file.js";
-import type { SignedAccess } from "../../domain/value-objects/signed-access.js";
-import { UploadMode, UploadSessionStatus } from "../../domain/enums/upload-status.js";
-import { BlobStatus } from "../../domain/enums/blob-status.js";
-import { FileStatus } from "../../domain/enums/file-status.js";
-import { generateId } from "../../utils/ids.js";
-import type { IObjectKeyPolicy } from "../policies/object-key-policy.js";
-import { DefaultObjectKeyPolicy } from "../policies/object-key-policy.js";
-import { FileVersion } from "../../index.js";
+} from "@/ports/services/i-storage-service";
+import type { UploadedPart } from "@/domain/models/uploaded-part";
+import type { UploadSession } from "@/domain/models/upload-session";
+import type { Blob as StorageBlob } from "@/domain/models/blob";
+import type { File } from "@/domain/models/file";
+import type { SignedAccess } from "@/domain/value-objects/signed-access";
+import { UploadMode, UploadSessionStatus } from "@/domain/enums/upload-status";
+import { BlobStatus } from "@/domain/enums/blob-status";
+import { FileStatus } from "@/domain/enums/file-status";
+import { generateId } from "@/utils/ids";
+import type { IObjectKeyPolicy } from "@/application/policies/object-key-policy";
+import { DefaultObjectKeyPolicy } from "@/application/policies/object-key-policy";
+import type { FileVersion } from "@/domain/models/file-version";
 
 export interface DefaultStorageServiceOptions {
   readonly storage: IStorage;
@@ -116,7 +117,7 @@ export class DefaultStorageService implements IStorageService {
     return { session, uploadUrl };
   }
 
-  async getUploadSession(sessionId: string): Promise<import("../../domain/models/upload-session.js").UploadSession | undefined> {
+  async getUploadSession(sessionId: string): Promise<UploadSession | undefined> {
     return this.metadata.uploads.getSession(sessionId);
   }
 

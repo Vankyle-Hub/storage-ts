@@ -1,1 +1,1 @@
-export { AzureBlobStorage } from "./azure-blob-storage.js";
+export { AzureBlobStorage } from "@/storage/azure-blob-storage";

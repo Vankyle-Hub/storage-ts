@@ -7,7 +7,7 @@ import {
   UploadSessionStatus,
   BlobStatus,
   FileStatus,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 import type {
   IStorage,
   IMetadataStore,
@@ -15,11 +15,11 @@ import type {
   IBlobStore,
   IFileStore,
   StorageCapabilities,
-} from "@vankyle-hub/storage-core";
+} from "@vankyle/storage-core";
 import {
   CapabilityNotSupportedError,
   MetadataNotFoundError,
-} from "@vankyle-hub/storage-shared";
+} from "@vankyle/storage-shared";
 
 // ── Helper factories ──
 
