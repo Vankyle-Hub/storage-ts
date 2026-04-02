@@ -31,7 +31,7 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
           scope: '@vankyle'
-
+  
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -39,10 +39,7 @@ jobs:
         run: pnpm build
 
       - name: Publish packages to npmjs.com
-        run: pnpm -r --filter "./packages/*" publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+        run: NODE_AUTH_TOKEN="" pnpm -r --filter "./packages/*" publish --no-git-checks
 
   publish-github:
     name: Publish to GitHub Packages
