@@ -38,8 +38,10 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      # As pnpm doesn't support Trusted Publishing, we need to use npm to publish packages to npmjs.com
       - name: Publish packages to npmjs.com
-        run: NODE_AUTH_TOKEN="" pnpm -r --filter "./packages/*" publish --no-git-checks
+        run: node scripts/publish-npmjs.mjs
+
 
   publish-github:
     name: Publish to GitHub Packages
