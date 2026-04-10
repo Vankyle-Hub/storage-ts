@@ -2,6 +2,8 @@
 
 This document describes the design principles, package responsibilities, domain model, and interface contracts for `vankyle-storage`.
 
+See also: [getting-started.md](getting-started.md) · [migrations.md](migrations.md) · [github-packages.md](github-packages.md)
+
 ## Table of Contents
 
 - [Design Principles](#design-principles)
@@ -92,7 +94,10 @@ Adapters for the Cloudflare Workers runtime:
 
 - Works with PostgreSQL, MySQL, SQL Server, SQLite, and Cloudflare D1 (via `D1Dialect`)
 - Contains table schema types (`StorageDatabase`), row mappers, and Kysely query implementations for all six stores
-- Includes migration `0001_init.ts` to create all tables and indexes
+- Provides database-type-aware migration factories via `createMigrations(dbType)` and `createMigrationProvider(dbType)`
+  - `'postgres'` — uses `varchar(n)`, `bigint`, `timestamp` for PostgreSQL (and MySQL / SQL Server)
+  - `'sqlite'` — uses `text`, `integer` for SQLite and Cloudflare D1
+- Provides `generateMigrationSql(key, dbType)` / `generateAllMigrationSql(dbType)` to emit plain SQL strings (useful for generating `wrangler d1 migrations apply` scripts at build time)
 
 ---
 

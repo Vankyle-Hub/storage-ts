@@ -14,3 +14,10 @@ export type {
   FileVersionsTable,
 } from "@/schema/index";
 export * as migrations from "@/migrations/index";
+export {
+  createMigrations,
+  createMigrationProvider,
+  generateMigrationSql,
+  generateAllMigrationSql,
+} from "@/migrations/index";
+export type { DatabaseType } from "@/migrations/index";

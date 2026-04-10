@@ -15,6 +15,9 @@ This guide walks through the most common usage patterns. For the full design rat
   - [Multipart — server-proxied parts](#multipart--server-proxied-parts)
 - [Retrieving an upload session](#retrieving-an-upload-session)
 - [Running database migrations](#running-database-migrations)
+  - [PostgreSQL / MySQL / SQLite](#postgresql--mysql--sqlite)
+  - [Cloudflare D1 — programmatic](#cloudflare-d1--programmatic)
+  - [Cloudflare D1 — generate SQL for wrangler](#cloudflare-d1--generate-sql-for-wrangler)
 
 ---
 
@@ -152,7 +155,7 @@ export default {
     const storage = new R2BindingStorage(env.BUCKET);
 
     const db = new Kysely<StorageDatabase>({
-      dialect: new D1Dialect({ database: env.DB }),
+      dialect: new D1Dialect(env.DB),
     });
 
     const metadata = new KyselyMetadataStore(db);
@@ -339,20 +342,59 @@ Orphaned blobs (blobs with no remaining references) are marked with `BlobStatus.
 
 ## Running database migrations
 
-The `kysely` package ships with a migration:
+Migrations are database-type-aware. Pass `'postgres'` or `'sqlite'` to get DDL that matches your database's type system. For a full reference see [migrations.md](migrations.md).
+
+### PostgreSQL / MySQL / SQLite
 
 ```typescript
 import { Migrator } from "kysely";
-import { migrations } from "@vankyle-hub/storage-kysely";
+import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
 
 const migrator = new Migrator({
   db,
-  provider: {
-    getMigrations: async () => migrations,
-  },
+  provider: createMigrationProvider("postgres"),
 });
 
 const { error, results } = await migrator.migrateToLatest();
+```
+
+For MySQL or standard SQLite pass `"postgres"` or `"sqlite"` respectively.
+
+### Cloudflare D1 — programmatic
+
+Use `'sqlite'` with the Kysely `Migrator` inside your Worker or a setup script:
+
+```typescript
+import { Migrator, Kysely } from "kysely";
+import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
+import { D1Dialect } from "@vankyle-hub/storage-cloudflare";
+
+const db = new Kysely({ dialect: new D1Dialect(env.DB) });
+const migrator = new Migrator({
+  db,
+  provider: createMigrationProvider("sqlite"),
+});
+await migrator.migrateToLatest();
+```
+
+### Cloudflare D1 — generate SQL for wrangler
+
+Use `generateAllMigrationSql` at build time to produce `.sql` files for `wrangler d1 migrations apply`:
+
+```typescript
+import { generateAllMigrationSql } from "@vankyle-hub/storage-kysely";
+import { writeFileSync } from "node:fs";
+
+const migrations = await generateAllMigrationSql("sqlite");
+for (const [key, sql] of Object.entries(migrations)) {
+  writeFileSync(`migrations/${key}.sql`, sql);
+}
+```
+
+Then apply with wrangler:
+
+```bash
+wrangler d1 migrations apply my-db
 ```
 
 This creates the tables `upload_sessions`, `uploaded_parts`, `blobs`, `blob_references`, `files`, and `file_versions` along with all required indexes.
