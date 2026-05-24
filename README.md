@@ -115,6 +115,12 @@ const { blob, file } = await service.completeUploadSession({
 const { url } = await service.getReadUrl({ fileId: file.id });
 ```
 
+`getReadUrl` now accepts optional `responseContentDisposition` and
+`responseContentType`. When supplied, the S3 adapter bakes them into the
+presigned URL via S3's `response-content-disposition` /
+`response-content-type` query parameters, so the eventual GET response carries
+those headers without a backend proxy hop.
+
 See [docs/getting-started.md](docs/getting-started.md) for more examples including multipart uploads, Azure, and Cloudflare Workers.
 
 ## GitHub Packages

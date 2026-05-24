@@ -340,7 +340,8 @@ export class DefaultStorageService implements IStorageService {
       objectKey: blob.objectKey,
       expiresInSeconds:
         request.expiresInSeconds ?? this.defaultReadUrlExpiresInSeconds,
-      responseContentType: file.mimeType ?? blob.mimeType,
+      responseContentDisposition: request.responseContentDisposition,
+      responseContentType: request.responseContentType ?? file.mimeType ?? blob.mimeType,
     });
   }
 

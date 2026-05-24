@@ -81,6 +81,12 @@ const storage = new S3Storage({
 
 All four URL types use `@aws-sdk/s3-request-presigner`.
 
+`createReadUrl` and `DefaultStorageService.getReadUrl` support optional
+`responseContentDisposition` and `responseContentType` overrides. They are
+passed to S3 as `response-content-disposition` and `response-content-type`
+query parameters on the presigned URL, so S3 sets those response headers on the
+eventual GET.
+
 ## Options reference
 
 ```typescript

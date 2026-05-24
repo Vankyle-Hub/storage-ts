@@ -47,7 +47,7 @@ The public API for application code. Orchestrates uploads, manages blob and file
 | `registerPart` | Records a part that the client uploaded directly |
 | `completeUploadSession` | Finalises the upload and creates blob + optional file records |
 | `abortUploadSession` | Cancels the upload and cleans up the provider session |
-| `getReadUrl` | Generates a presigned download URL for a file |
+| `getReadUrl` | Generates a presigned download URL for a file. Optional `responseContentDisposition` and `responseContentType` overrides are forwarded to capable storage adapters. |
 | `getFile` | Fetches a file record by ID |
 | `getBlob` | Fetches a blob record by ID |
 | `deleteFile` | Soft-deletes a file and marks orphaned blobs |

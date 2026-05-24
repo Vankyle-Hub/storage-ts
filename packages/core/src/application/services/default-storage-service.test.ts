@@ -15,11 +15,27 @@ import type {
   IBlobStore,
   IFileStore,
   StorageCapabilities,
+  GetReadUrlRequest,
 } from "@vankyle/storage-core";
 import {
   CapabilityNotSupportedError,
   MetadataNotFoundError,
 } from "@vankyle/storage-shared";
+
+const minimalReadUrlRequest: GetReadUrlRequest = { fileId: "file-1" };
+const readUrlRequestWithResponseOverrides: GetReadUrlRequest = {
+  fileId: "file-1",
+  responseContentDisposition: "attachment; filename=\"demo.txt\"",
+  responseContentType: "text/plain",
+};
+const readUrlRequestWithInvalidResponseContentType: GetReadUrlRequest = {
+  fileId: "file-1",
+  // @ts-expect-error responseContentType must be a string when provided.
+  responseContentType: 123,
+};
+void minimalReadUrlRequest;
+void readUrlRequestWithResponseOverrides;
+void readUrlRequestWithInvalidResponseContentType;
 
 // ── Helper factories ──
 
@@ -927,6 +943,48 @@ describe("DefaultStorageService", () => {
       await service.getReadUrl({ fileId: "file-1", versionId: "v-1" });
 
       expect(metadata.files.getVersion).toHaveBeenCalledWith("v-1");
+    });
+
+    it("should forward response header overrides to storage read URLs", async () => {
+      const { service, storage, metadata } = createService();
+
+      (metadata.files.getFile as Mock).mockResolvedValue({
+        id: "file-1",
+        displayName: "doc.txt",
+        currentVersionId: "v-1",
+        mimeType: "text/plain",
+        status: FileStatus.Active,
+      });
+      (metadata.files.getVersion as Mock).mockResolvedValue({
+        id: "v-1",
+        fileId: "file-1",
+        blobId: "blob-1",
+        version: 1,
+        size: 2048,
+      });
+      (metadata.blobs.getBlob as Mock).mockResolvedValue({
+        id: "blob-1",
+        provider: StorageProvider.S3,
+        bucket: "test-bucket",
+        objectKey: "path/to/blob",
+        size: 2048,
+        status: BlobStatus.Active,
+      });
+
+      await service.getReadUrl({
+        fileId: "file-1",
+        responseContentDisposition:
+          "attachment; filename=\"demo.txt\"; filename*=UTF-8''demo.txt",
+        responseContentType: "application/octet-stream",
+      });
+
+      expect(storage.createReadUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          responseContentDisposition:
+            "attachment; filename=\"demo.txt\"; filename*=UTF-8''demo.txt",
+          responseContentType: "application/octet-stream",
+        }),
+      );
     });
 
     it("should throw when file not found", async () => {

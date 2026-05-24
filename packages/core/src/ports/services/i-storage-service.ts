@@ -68,6 +68,21 @@ export interface GetReadUrlRequest {
   readonly fileId: string;
   readonly versionId?: string | undefined;
   readonly expiresInSeconds?: number | undefined;
+  /**
+   * RFC 6266 Content-Disposition override.
+   * Forwarded to supported storage adapters so the eventual GET response sets
+   * this header verbatim.
+   *
+   * Example:
+   *   `attachment; filename="demo.txt"; filename*=UTF-8''demo.txt`
+   */
+  readonly responseContentDisposition?: string | undefined;
+  /**
+   * Content-Type override.
+   * Typically used in tandem with responseContentDisposition for forced
+   * downloads.
+   */
+  readonly responseContentType?: string | undefined;
 }
 
 export interface DeleteFileRequest {
