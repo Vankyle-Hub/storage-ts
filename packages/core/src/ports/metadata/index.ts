@@ -17,3 +17,8 @@ export type {
   UpdateFileInput,
   CreateFileVersionInput,
 } from "@/ports/metadata/i-file-store";
+export type {
+  ITagStore,
+  CreateTagInput,
+  CreateFileTagInput,
+} from "@/ports/metadata/i-tag-store";

@@ -6,6 +6,8 @@ import {
   fileSchema,
   fileVersionSchema,
   blobReferenceSchema,
+  tagSchema,
+  fileTagSchema,
 } from "@vankyle/storage-core";
 
 describe("blobSchema", () => {
@@ -313,5 +315,60 @@ describe("blobReferenceSchema", () => {
     if (result.success) {
       expect(result.data.createdAt).toBeInstanceOf(Date);
     }
+  });
+});
+
+describe("tagSchema", () => {
+  const validTag = {
+    id: "tag-1",
+    ownerId: "owner-1",
+    name: "Important",
+    normalizedName: "important",
+    createdAt: "2025-01-01T00:00:00Z",
+    updatedAt: "2025-01-01T00:00:00Z",
+  };
+
+  it("should accept valid tag data", () => {
+    const result = tagSchema.safeParse(validTag);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.createdAt).toBeInstanceOf(Date);
+    }
+  });
+
+  it("should reject empty names and owner ids", () => {
+    expect(tagSchema.safeParse({ ...validTag, name: "" }).success).toBe(false);
+    expect(tagSchema.safeParse({ ...validTag, ownerId: "" }).success).toBe(false);
+  });
+
+  it("should accept metadata", () => {
+    const result = tagSchema.safeParse({
+      ...validTag,
+      metadata: { color: "red" },
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("fileTagSchema", () => {
+  const validFileTag = {
+    fileId: "file-1",
+    tagId: "tag-1",
+    ownerId: "owner-1",
+    createdAt: "2025-01-01T00:00:00Z",
+  };
+
+  it("should accept valid file tag data", () => {
+    const result = fileTagSchema.safeParse(validFileTag);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.createdAt).toBeInstanceOf(Date);
+    }
+  });
+
+  it("should reject empty ids", () => {
+    expect(fileTagSchema.safeParse({ ...validFileTag, fileId: "" }).success).toBe(false);
+    expect(fileTagSchema.safeParse({ ...validFileTag, tagId: "" }).success).toBe(false);
+    expect(fileTagSchema.safeParse({ ...validFileTag, ownerId: "" }).success).toBe(false);
   });
 });

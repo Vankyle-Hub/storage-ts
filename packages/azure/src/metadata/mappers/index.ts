@@ -16,3 +16,9 @@ export {
   fileDocToModel,
   fileVersionDocToModel,
 } from "@/metadata/mappers/file-doc.mapper";
+export {
+  type TagDoc,
+  type FileTagDoc,
+  tagDocToModel,
+  fileTagDocToModel,
+} from "@/metadata/mappers/tag-doc.mapper";
