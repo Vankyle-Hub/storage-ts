@@ -3,6 +3,7 @@ import type { DatabaseType, MigrationOptions } from "./types";
 import { createMigration0001 } from "./0001_init";
 import { createMysqlMigration0001 } from "./0001_init.mysql";
 import { createMigration0002 } from "./0002_timestamptz";
+import { createMigration0002 as createTagsMigration } from "./0002_add_tags";
 
 /**
  * All migrations for a database type, keyed by name. Kysely's `Migrator`
@@ -27,6 +28,7 @@ export function createMigrations(
         ? createMysqlMigration0001()
         : createMigration0001(dbType),
     "0002_timestamptz": createMigration0002(dbType, options),
+    "0002_add_tags": createTagsMigration(dbType),
   };
 }
 

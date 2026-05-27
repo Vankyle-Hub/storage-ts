@@ -4,3 +4,4 @@ export { blobRowToModel } from "@/mappers/blob-row.mapper";
 export { fileRowToModel } from "@/mappers/file-row.mapper";
 export { fileVersionRowToModel } from "@/mappers/file-version-row.mapper";
 export { blobReferenceRowToModel } from "@/mappers/blob-reference-row.mapper";
+export { tagRowToModel, fileTagRowToModel } from "@/mappers/tag-row.mapper";

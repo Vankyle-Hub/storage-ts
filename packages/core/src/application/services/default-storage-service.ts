@@ -21,6 +21,11 @@ import type {
   CompleteUploadSessionResponse,
   GetReadUrlRequest,
   DeleteFileRequest,
+  CreateTagRequest,
+  AddTagToFileRequest,
+  RemoveTagFromFileRequest,
+  ListFileTagsRequest,
+  ListFilesByTagRequest,
 } from "@/ports/services/i-storage-service";
 import type { UploadedPart } from "@/domain/models/uploaded-part";
 import type { UploadSession } from "@/domain/models/upload-session";
@@ -31,11 +36,13 @@ import { UploadMode, UploadSessionStatus } from "@/domain/enums/upload-status";
 import { BlobStatus } from "@/domain/enums/blob-status";
 import { FileStatus } from "@/domain/enums/file-status";
 import { generateId } from "@/utils/ids";
+import { normalizeTagName } from "@/utils/tags";
 import type { IObjectKeyPolicy } from "@/application/policies/object-key-policy";
 import { DefaultObjectKeyPolicy } from "@/application/policies/object-key-policy";
 import { assertValidObjectKey } from "@/application/policies/object-key-validation";
 import type { FileVersion } from "@/domain/models/file-version";
 import { ValidationError } from "@vankyle/storage-shared";
+import type { Tag } from "@/domain/models/tag";
 
 export interface DefaultStorageServiceOptions {
   readonly storage: IStorage;
@@ -498,6 +505,72 @@ export class DefaultStorageService implements IStorageService {
     }
   }
 
+  async createTag(request: CreateTagRequest): Promise<Tag> {
+    const existing = await this.metadata.tags.getTagByName(
+      request.ownerId,
+      request.name,
+    );
+    if (existing) return existing;
+
+    return this.metadata.tags.createTag({
+      ownerId: request.ownerId,
+      name: request.name,
+      normalizedName: normalizeTagName(request.name),
+      metadata: request.metadata,
+    });
+  }
+
+  async listTags(ownerId: string): Promise<Tag[]> {
+    return this.metadata.tags.listTags(ownerId);
+  }
+
+  async addTagToFile(request: AddTagToFileRequest): Promise<Tag> {
+    await this.requireOwnedFile(request.fileId, request.ownerId);
+    const tag = await this.createTag({
+      ownerId: request.ownerId,
+      name: request.tagName,
+      metadata: request.metadata,
+    });
+
+    await this.metadata.tags.addTagToFile({
+      ownerId: request.ownerId,
+      fileId: request.fileId,
+      tagId: tag.id,
+    });
+
+    return tag;
+  }
+
+  async removeTagFromFile(request: RemoveTagFromFileRequest): Promise<void> {
+    await this.requireOwnedFile(request.fileId, request.ownerId);
+    const tag = await this.metadata.tags.getTagByName(
+      request.ownerId,
+      request.tagName,
+    );
+    if (!tag) return;
+
+    await this.metadata.tags.removeTagFromFile(
+      request.ownerId,
+      request.fileId,
+      tag.id,
+    );
+  }
+
+  async listFileTags(request: ListFileTagsRequest): Promise<Tag[]> {
+    await this.requireOwnedFile(request.fileId, request.ownerId);
+    return this.metadata.tags.listTagsForFile(request.ownerId, request.fileId);
+  }
+
+  async listFilesByTag(request: ListFilesByTagRequest): Promise<File[]> {
+    const tag = await this.metadata.tags.getTagByName(
+      request.ownerId,
+      request.tagName,
+    );
+    if (!tag) return [];
+
+    return this.metadata.tags.listFilesByTag(request.ownerId, tag.id);
+  }
+
   /**
    * Guards every operation that writes to a session or finalises it.
    *
@@ -540,6 +613,14 @@ export class DefaultStorageService implements IStorageService {
       throw new MetadataNotFoundError("UploadSession", sessionId);
     }
     return session;
+  }
+
+  private async requireOwnedFile(fileId: string, ownerId: string): Promise<File> {
+    const file = await this.metadata.files.getFile(fileId);
+    if (!file || file.ownerId !== ownerId) {
+      throw new MetadataNotFoundError("File", fileId);
+    }
+    return file;
   }
 }
 
