@@ -4,3 +4,5 @@ export { blobSchema, type BlobInput } from "@/schemas/blob.schema";
 export { fileSchema, type FileInput } from "@/schemas/file.schema";
 export { fileVersionSchema, type FileVersionInput } from "@/schemas/file-version.schema";
 export { blobReferenceSchema, type BlobReferenceInput } from "@/schemas/blob-reference.schema";
+export { tagSchema, type TagInput } from "@/schemas/tag.schema";
+export { fileTagSchema, type FileTagInput } from "@/schemas/file-tag.schema";

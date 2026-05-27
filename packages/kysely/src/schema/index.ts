@@ -6,4 +6,6 @@ export type {
   BlobReferencesTable,
   FilesTable,
   FileVersionsTable,
+  TagsTable,
+  FileTagsTable,
 } from "@/schema/database";

@@ -14,6 +14,7 @@ import type {
   IUploadSessionStore,
   IBlobStore,
   IFileStore,
+  ITagStore,
   StorageCapabilities,
   GetReadUrlRequest,
 } from "@vankyle/storage-core";
@@ -205,15 +206,42 @@ function createMockFileStore(): IFileStore {
   };
 }
 
+function createMockTagStore(): ITagStore {
+  return {
+    createTag: vi.fn().mockImplementation(async (input) => ({
+      id: input.id ?? "tag-1",
+      ownerId: input.ownerId,
+      name: input.name,
+      normalizedName: input.normalizedName ?? input.name.toLowerCase(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      metadata: input.metadata,
+    })),
+    getTag: vi.fn(),
+    getTagByName: vi.fn(),
+    listTags: vi.fn().mockResolvedValue([]),
+    deleteTag: vi.fn(),
+    addTagToFile: vi.fn().mockImplementation(async (input) => ({
+      ...input,
+      createdAt: new Date(),
+    })),
+    removeTagFromFile: vi.fn(),
+    listTagsForFile: vi.fn().mockResolvedValue([]),
+    listFilesByTag: vi.fn().mockResolvedValue([]),
+  };
+}
+
 function createMockMetadata(): IMetadataStore & {
   uploads: ReturnType<typeof createMockUploadSessionStore>;
   blobs: ReturnType<typeof createMockBlobStore>;
   files: ReturnType<typeof createMockFileStore>;
+  tags: ReturnType<typeof createMockTagStore>;
 } {
   return {
     uploads: createMockUploadSessionStore(),
     blobs: createMockBlobStore(),
     files: createMockFileStore(),
+    tags: createMockTagStore(),
   };
 }
 
@@ -1094,6 +1122,154 @@ describe("DefaultStorageService", () => {
 
       const result = await service.getBlob("blob-1");
       expect(result).toBe(mockBlob);
+    });
+  });
+
+  describe("file tags", () => {
+    it("should create a user-scoped tag with a normalized name", async () => {
+      const { service, metadata } = createService();
+
+      const result = await service.createTag({
+        ownerId: "owner-1",
+        name: "  Important  ",
+        metadata: { color: "red" },
+      });
+
+      expect(metadata.tags.createTag).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ownerId: "owner-1",
+          name: "  Important  ",
+          normalizedName: "important",
+          metadata: { color: "red" },
+        }),
+      );
+      expect(result.name).toBe("  Important  ");
+    });
+
+    it("should return an existing tag instead of creating a duplicate", async () => {
+      const { service, metadata } = createService();
+      const existing = {
+        id: "tag-existing",
+        ownerId: "owner-1",
+        name: "Important",
+        normalizedName: "important",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      (metadata.tags.getTagByName as Mock).mockResolvedValue(existing);
+
+      const result = await service.createTag({
+        ownerId: "owner-1",
+        name: "important",
+      });
+
+      expect(result).toBe(existing);
+      expect(metadata.tags.createTag).not.toHaveBeenCalled();
+    });
+
+    it("should add a tag to an owned file", async () => {
+      const { service, metadata } = createService();
+      (metadata.files.getFile as Mock).mockResolvedValue({
+        id: "file-1",
+        ownerId: "owner-1",
+        displayName: "doc.txt",
+        status: FileStatus.Active,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await service.addTagToFile({
+        ownerId: "owner-1",
+        fileId: "file-1",
+        tagName: "Important",
+      });
+
+      expect(metadata.tags.addTagToFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ownerId: "owner-1",
+          fileId: "file-1",
+          tagId: "tag-1",
+        }),
+      );
+    });
+
+    it("should reject tagging a file owned by another user", async () => {
+      const { service, metadata } = createService();
+      (metadata.files.getFile as Mock).mockResolvedValue({
+        id: "file-1",
+        ownerId: "owner-2",
+        displayName: "doc.txt",
+        status: FileStatus.Active,
+      });
+
+      await expect(
+        service.addTagToFile({
+          ownerId: "owner-1",
+          fileId: "file-1",
+          tagName: "Important",
+        }),
+      ).rejects.toThrow(MetadataNotFoundError);
+    });
+
+    it("should remove a tag from a file idempotently", async () => {
+      const { service, metadata } = createService();
+      (metadata.files.getFile as Mock).mockResolvedValue({
+        id: "file-1",
+        ownerId: "owner-1",
+        displayName: "doc.txt",
+        status: FileStatus.Active,
+      });
+      (metadata.tags.getTagByName as Mock).mockResolvedValue({
+        id: "tag-1",
+        ownerId: "owner-1",
+        name: "Important",
+        normalizedName: "important",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await service.removeTagFromFile({
+        ownerId: "owner-1",
+        fileId: "file-1",
+        tagName: "important",
+      });
+
+      expect(metadata.tags.removeTagFromFile).toHaveBeenCalledWith(
+        "owner-1",
+        "file-1",
+        "tag-1",
+      );
+    });
+
+    it("should list tags and files by tag", async () => {
+      const { service, metadata } = createService();
+      const tag = {
+        id: "tag-1",
+        ownerId: "owner-1",
+        name: "Important",
+        normalizedName: "important",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const file = {
+        id: "file-1",
+        ownerId: "owner-1",
+        displayName: "doc.txt",
+        status: FileStatus.Active,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      (metadata.files.getFile as Mock).mockResolvedValue(file);
+      (metadata.tags.listTagsForFile as Mock).mockResolvedValue([tag]);
+      (metadata.tags.getTagByName as Mock).mockResolvedValue(tag);
+      (metadata.tags.listFilesByTag as Mock).mockResolvedValue([file]);
+
+      await expect(
+        service.listFileTags({ ownerId: "owner-1", fileId: "file-1" }),
+      ).resolves.toEqual([tag]);
+      await expect(
+        service.listFilesByTag({ ownerId: "owner-1", tagName: "Important" }),
+      ).resolves.toEqual([file]);
     });
   });
 

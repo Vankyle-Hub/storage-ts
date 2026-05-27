@@ -9,4 +9,9 @@ export type {
   CompleteUploadSessionResponse,
   GetReadUrlRequest,
   DeleteFileRequest,
+  CreateTagRequest,
+  AddTagToFileRequest,
+  RemoveTagFromFileRequest,
+  ListFileTagsRequest,
+  ListFilesByTagRequest,
 } from "@/ports/services/i-storage-service";

@@ -88,6 +88,23 @@ export interface FileVersionsTable {
   metadata: string | null;
 }
 
+export interface TagsTable {
+  id: string;
+  owner_id: string;
+  name: string;
+  normalized_name: string;
+  created_at: ColumnType<Date, Date | string, Date | string>;
+  updated_at: ColumnType<Date, Date | string, Date | string>;
+  metadata: string | null;
+}
+
+export interface FileTagsTable {
+  file_id: string;
+  tag_id: string;
+  owner_id: string;
+  created_at: ColumnType<Date, Date | string, Date | string>;
+}
+
 export interface StorageDatabase {
   upload_sessions: UploadSessionsTable;
   uploaded_parts: UploadedPartsTable;
@@ -95,4 +112,6 @@ export interface StorageDatabase {
   blob_references: BlobReferencesTable;
   files: FilesTable;
   file_versions: FileVersionsTable;
+  tags: TagsTable;
+  file_tags: FileTagsTable;
 }
