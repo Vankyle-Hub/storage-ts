@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1
+
+- Removed the `node:crypto` dependency from `@vankyle/storage-core` ID
+  generation. `generateId()` now uses the Web Crypto API via
+  `globalThis.crypto.randomUUID()` with a `getRandomValues()` UUID v4 fallback.
+- This fixes browser/Cloudflare Workers bundling for packages that depend on
+  `@vankyle/storage-core`, including `@vankyle/storage-s3`, without requiring
+  Node.js polyfills for this SDK code path.
+
 ## 0.4.0
 
 - `getReadUrl` now accepts optional `responseContentDisposition` and
