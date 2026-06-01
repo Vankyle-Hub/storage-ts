@@ -1,6 +1,6 @@
 {
   "name": "@vankyle/storage-kysely",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Kysely-based SQL metadata store for vankyle-storage.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json && tsc-alias -p tsconfig.json",
