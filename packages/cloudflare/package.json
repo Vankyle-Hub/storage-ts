@@ -33,7 +33,7 @@
   "dependencies": {
     "@vankyle/storage-core": "workspace:*",
     "@vankyle/storage-shared": "workspace:*",
-    "@cloudflare/workers-types": "^4.20260412.1",
+    "@cloudflare/workers-types": "^4.20260416.2",
     "kysely": "^0.28.14"
   }
 }
