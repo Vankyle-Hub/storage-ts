@@ -34,6 +34,6 @@
     "@vankyle/storage-core": "workspace:*",
     "@vankyle/storage-shared": "workspace:*",
     "@cloudflare/workers-types": "^4.20260412.1",
-    "kysely": "^0.28.14"
+    "kysely": "^0.28.16"
   }
 }
