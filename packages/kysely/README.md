@@ -1,4 +1,4 @@
-# @vankyle-hub/storage-kysely
+# @vankyle/storage-kysely
 
 `IMetadataStore` implementation backed by [Kysely](https://kysely.dev/), supporting any Kysely-compatible SQL database.
 
@@ -8,12 +8,12 @@
 - MySQL
 - SQL Server (MSSQL)
 - SQLite
-- Cloudflare D1 (via `D1Dialect` from `@vankyle-hub/storage-cloudflare`)
+- Cloudflare D1 (via `D1Dialect` from `@vankyle/storage-cloudflare`)
 
 ## Installation
 
 ```bash
-pnpm add @vankyle-hub/storage-kysely kysely @vankyle-hub/storage-core @vankyle-hub/storage-shared
+pnpm add @vankyle/storage-kysely kysely @vankyle/storage-core @vankyle/storage-shared
 ```
 
 Add your database driver (e.g. `pg`, `mysql2`, `better-sqlite3`) as needed.
@@ -21,10 +21,10 @@ Add your database driver (e.g. `pg`, `mysql2`, `better-sqlite3`) as needed.
 ## Usage
 
 ```typescript
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 const db = new Kysely<StorageDatabase>({
   dialect: new PostgresDialect({
@@ -38,7 +38,7 @@ const metadata = new KyselyMetadataStore(db);
 Pass `metadata` to `DefaultStorageService`:
 
 ```typescript
-import { DefaultStorageService } from "@vankyle-hub/storage-core";
+import { DefaultStorageService } from "@vankyle/storage-core";
 
 const service = new DefaultStorageService({ storage, metadata, bucket: "..." });
 ```
@@ -67,11 +67,11 @@ Six tables are created by the included migration:
 
 ## Running migrations
 
-`@vankyle-hub/storage-kysely` exports a `migrations` object compatible with the [Kysely `Migrator`](https://kysely.dev/docs/migrations):
+`@vankyle/storage-kysely` exports a `migrations` object compatible with the [Kysely `Migrator`](https://kysely.dev/docs/migrations):
 
 ```typescript
 import { Migrator } from "kysely";
-import { migrations } from "@vankyle-hub/storage-kysely";
+import { migrations } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({
   db,
@@ -96,20 +96,20 @@ if (error) {
 `StorageDatabase` is the typed Kysely database interface. Import it for type inference:
 
 ```typescript
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 const db = new Kysely<StorageDatabase>({ ... });
 ```
 
 ## Cloudflare D1
 
-Use the `D1Dialect` from `@vankyle-hub/storage-cloudflare` to run `KyselyMetadataStore` on D1:
+Use the `D1Dialect` from `@vankyle/storage-cloudflare` to run `KyselyMetadataStore` on D1:
 
 ```typescript
-import { D1Dialect } from "@vankyle-hub/storage-cloudflare";
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
+import { D1Dialect } from "@vankyle/storage-cloudflare";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
 import { Kysely } from "kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 const db = new Kysely<StorageDatabase>({
   dialect: new D1Dialect({ database: env.DB }),

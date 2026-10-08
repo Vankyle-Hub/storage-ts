@@ -1,4 +1,4 @@
-# @vankyle-hub/storage-cloudflare
+# @vankyle/storage-cloudflare
 
 Cloudflare Workers adapters for `vankyle-storage`:
 
@@ -8,25 +8,25 @@ Cloudflare Workers adapters for `vankyle-storage`:
 ## Installation
 
 ```bash
-pnpm add @vankyle-hub/storage-cloudflare @vankyle-hub/storage-core @vankyle-hub/storage-shared
+pnpm add @vankyle/storage-cloudflare @vankyle/storage-core @vankyle/storage-shared
 ```
 
 For metadata on D1, also install:
 
 ```bash
-pnpm add @vankyle-hub/storage-kysely kysely
+pnpm add @vankyle/storage-kysely kysely
 ```
 
 ## R2 Binding Storage
 
 Use `R2BindingStorage` when running inside a Cloudflare Worker and you have a direct `R2Bucket` binding (i.e. `env.BUCKET`).
 
-> For Cloudflare R2 accessed via the S3-compatible HTTP API (outside of Workers), use [`@vankyle-hub/storage-s3`](../s3/README.md) instead.
+> For Cloudflare R2 accessed via the S3-compatible HTTP API (outside of Workers), use [`@vankyle/storage-s3`](../s3/README.md) instead.
 
 ### Setup
 
 ```typescript
-import { R2BindingStorage } from "@vankyle-hub/storage-cloudflare";
+import { R2BindingStorage } from "@vankyle/storage-cloudflare";
 
 interface Env {
   BUCKET: R2Bucket;
@@ -68,15 +68,15 @@ The `providerUploadId` returned by `initUploadSession` is the R2 `uploadId`.
 
 ## D1 Kysely Dialect
 
-`D1Dialect` adapts Cloudflare D1 to the Kysely query builder interface. This allows `KyselyMetadataStore` from `@vankyle-hub/storage-kysely` to run on D1 without any additional code changes.
+`D1Dialect` adapts Cloudflare D1 to the Kysely query builder interface. This allows `KyselyMetadataStore` from `@vankyle/storage-kysely` to run on D1 without any additional code changes.
 
 ### Setup
 
 ```typescript
-import { D1Dialect } from "@vankyle-hub/storage-cloudflare";
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
+import { D1Dialect } from "@vankyle/storage-cloudflare";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
 import { Kysely } from "kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 interface Env {
   DB: D1Database;
@@ -101,11 +101,11 @@ D1 does not support:
 ## Complete Worker example
 
 ```typescript
-import { R2BindingStorage, D1Dialect } from "@vankyle-hub/storage-cloudflare";
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
-import { DefaultStorageService, UploadMode } from "@vankyle-hub/storage-core";
+import { R2BindingStorage, D1Dialect } from "@vankyle/storage-cloudflare";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
+import { DefaultStorageService, UploadMode } from "@vankyle/storage-core";
 import { Kysely } from "kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 interface Env {
   BUCKET: R2Bucket;
@@ -143,11 +143,11 @@ export default {
 
 ## D1 Migrations
 
-Run migrations from `@vankyle-hub/storage-kysely` using the Kysely `Migrator` with `D1Dialect`. The SQL is compatible with SQLite, which D1 is based on.
+Run migrations from `@vankyle/storage-kysely` using the Kysely `Migrator` with `D1Dialect`. The SQL is compatible with SQLite, which D1 is based on.
 
 ```typescript
 import { Migrator } from "kysely";
-import { migrations } from "@vankyle-hub/storage-kysely";
+import { migrations } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({
   db,

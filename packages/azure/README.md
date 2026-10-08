@@ -1,4 +1,4 @@
-# @vankyle-hub/storage-azure
+# @vankyle/storage-azure
 
 `IStorage` and `IMetadataStore` implementations for the Azure ecosystem.
 
@@ -12,7 +12,7 @@
 ## Installation
 
 ```bash
-pnpm add @vankyle-hub/storage-azure @vankyle-hub/storage-core @vankyle-hub/storage-shared
+pnpm add @vankyle/storage-azure @vankyle/storage-core @vankyle/storage-shared
 ```
 
 ## Azure Blob Storage
@@ -20,7 +20,7 @@ pnpm add @vankyle-hub/storage-azure @vankyle-hub/storage-core @vankyle-hub/stora
 ### Setup
 
 ```typescript
-import { AzureBlobStorage } from "@vankyle-hub/storage-azure";
+import { AzureBlobStorage } from "@vankyle/storage-azure";
 
 // Option 1: connection string
 const storage = new AzureBlobStorage({
@@ -89,7 +89,7 @@ If you need to create and pass in a `Container` object yourself:
 
 ```typescript
 import { CosmosClient } from "@azure/cosmos";
-import { CosmosMetadataStore } from "@vankyle-hub/storage-azure";
+import { CosmosMetadataStore } from "@vankyle/storage-azure";
 
 const client = new CosmosClient(connectionString);
 const { database } = await client.databases.createIfNotExists({ id: "my-database" });
@@ -123,7 +123,7 @@ resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
 ### Setup
 
 ```typescript
-import { CosmosMetadataStore } from "@vankyle-hub/storage-azure";
+import { CosmosMetadataStore } from "@vankyle/storage-azure";
 
 // Option 1: connection string
 const metadata = new CosmosMetadataStore({
@@ -162,8 +162,8 @@ interface CosmosMetadataOptions {
 ## Using both together
 
 ```typescript
-import { AzureBlobStorage, CosmosMetadataStore } from "@vankyle-hub/storage-azure";
-import { DefaultStorageService } from "@vankyle-hub/storage-core";
+import { AzureBlobStorage, CosmosMetadataStore } from "@vankyle/storage-azure";
+import { DefaultStorageService } from "@vankyle/storage-core";
 
 const service = new DefaultStorageService({
   storage: new AzureBlobStorage({

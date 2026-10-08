@@ -26,12 +26,12 @@ packages/
 
 | Package | npm name | Description |
 |---|---|---|
-| [core](packages/core) | `@vankyle-hub/storage-core` | Domain models, port interfaces, and `DefaultStorageService` |
-| [shared](packages/shared) | `@vankyle-hub/storage-shared` | Base errors, `Result` type, and utility helpers |
-| [s3](packages/s3) | `@vankyle-hub/storage-s3` | IStorage for AWS S3, Cloudflare R2 (HTTP), MinIO, and any S3-compatible backend |
-| [azure](packages/azure) | `@vankyle-hub/storage-azure` | IStorage for Azure Blob Storage + IMetadataStore for Cosmos DB |
-| [cloudflare](packages/cloudflare) | `@vankyle-hub/storage-cloudflare` | IStorage for R2 Worker Binding + Kysely dialect for D1 |
-| [kysely](packages/kysely) | `@vankyle-hub/storage-kysely` | IMetadataStore backed by any Kysely-compatible SQL database |
+| [core](packages/core) | `@vankyle/storage-core` | Domain models, port interfaces, and `DefaultStorageService` |
+| [shared](packages/shared) | `@vankyle/storage-shared` | Base errors, `Result` type, and utility helpers |
+| [s3](packages/s3) | `@vankyle/storage-s3` | IStorage for AWS S3, Cloudflare R2 (HTTP), MinIO, and any S3-compatible backend |
+| [azure](packages/azure) | `@vankyle/storage-azure` | IStorage for Azure Blob Storage + IMetadataStore for Cosmos DB |
+| [cloudflare](packages/cloudflare) | `@vankyle/storage-cloudflare` | IStorage for R2 Worker Binding + Kysely dialect for D1 |
+| [kysely](packages/kysely) | `@vankyle/storage-kysely` | IMetadataStore backed by any Kysely-compatible SQL database |
 
 ## Architecture Overview
 
@@ -56,27 +56,27 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 
 ## Quick Start
 
-Install the packages you need:
+Install the packages you need from npmjs.com (no authentication required):
 
 ```bash
 # Core is always required
-pnpm add @vankyle-hub/storage-core @vankyle-hub/storage-shared
+pnpm add @vankyle/storage-core @vankyle/storage-shared
 
 # Add provider packages as needed
-pnpm add @vankyle-hub/storage-s3       # AWS S3, R2 HTTP, MinIO
-pnpm add @vankyle-hub/storage-kysely   # PostgreSQL / MySQL / SQLite / D1
-pnpm add @vankyle-hub/storage-azure    # Azure Blob + Cosmos DB
-pnpm add @vankyle-hub/storage-cloudflare  # R2 Worker Binding + D1 dialect
+pnpm add @vankyle/storage-s3       # AWS S3, R2 HTTP, MinIO
+pnpm add @vankyle/storage-kysely   # PostgreSQL / MySQL / SQLite / D1
+pnpm add @vankyle/storage-azure    # Azure Blob + Cosmos DB
+pnpm add @vankyle/storage-cloudflare  # R2 Worker Binding + D1 dialect
 ```
 
 ### Basic usage: S3 + Kysely (PostgreSQL)
 
 ```typescript
-import { S3Storage } from "@vankyle-hub/storage-s3";
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
-import { DefaultStorageService } from "@vankyle-hub/storage-core";
+import { S3Storage } from "@vankyle/storage-s3";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
+import { DefaultStorageService } from "@vankyle/storage-core";
 import { Kysely, PostgresDialect } from "kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 // 1. Object storage adapter
 const storage = new S3Storage({
@@ -123,11 +123,11 @@ those headers without a backend proxy hop.
 
 See [docs/getting-started.md](docs/getting-started.md) for more examples including multipart uploads, Azure, and Cloudflare Workers.
 
-## GitHub Packages
+## Registries
 
-This repository is configured to publish packages to GitHub Packages.
+Packages are published to **npmjs.com** under the [`@vankyle`](https://www.npmjs.com/org/vankyle) scope — this is the primary distribution channel and requires no authentication to install.
 
-If you are consuming these packages from GitHub Packages, configure authentication first and then install the package scope from `https://npm.pkg.github.com`.
+The same releases are also mirrored to **GitHub Packages** under the `@vankyle-hub` scope. Installing from GitHub Packages requires a GitHub token with `read:packages`; configure your `.npmrc` first:
 
 ```ini
 @vankyle-hub:registry=https://npm.pkg.github.com

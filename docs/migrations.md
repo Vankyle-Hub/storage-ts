@@ -1,6 +1,6 @@
 # Database Migrations
 
-The `@vankyle-hub/storage-kysely` package ships migration factories that produce database-type-correct DDL. This page explains why the distinction matters, how to run migrations programmatically, and how to generate SQL scripts for Cloudflare D1.
+The `@vankyle/storage-kysely` package ships migration factories that produce database-type-correct DDL. This page explains why the distinction matters, how to run migrations programmatically, and how to generate SQL scripts for Cloudflare D1.
 
 ## Table of Contents
 
@@ -46,8 +46,8 @@ type DatabaseType = "postgres" | "sqlite";
 ```typescript
 import { Kysely, Migrator, PostgresDialect } from "kysely";
 import { Pool } from "pg";
-import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import { createMigrationProvider } from "@vankyle/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 const db = new Kysely<StorageDatabase>({
   dialect: new PostgresDialect({
@@ -73,8 +73,8 @@ For MySQL, swap `PostgresDialect` with `MysqlDialect` — the `"postgres"` type 
 ```typescript
 import { Kysely, Migrator, SqliteDialect } from "kysely";
 import Database from "better-sqlite3";
-import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import { createMigrationProvider } from "@vankyle/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 const db = new Kysely<StorageDatabase>({
   dialect: new SqliteDialect({
@@ -99,9 +99,9 @@ Run migrations inside a Worker (e.g. on a `fetch` with an admin route, or in a D
 ```typescript
 // worker.ts
 import { Kysely, Migrator } from "kysely";
-import { D1Dialect } from "@vankyle-hub/storage-cloudflare";
-import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import { D1Dialect } from "@vankyle/storage-cloudflare";
+import { createMigrationProvider } from "@vankyle/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 interface Env {
   DB: D1Database;
@@ -142,7 +142,7 @@ export default {
 
 ```typescript
 // scripts/generate-d1-migrations.ts
-import { generateAllMigrationSql } from "@vankyle-hub/storage-kysely";
+import { generateAllMigrationSql } from "@vankyle/storage-kysely";
 import { writeFileSync, mkdirSync } from "node:fs";
 
 mkdirSync("migrations", { recursive: true });
@@ -164,7 +164,7 @@ wrangler d1 migrations apply my-db
 You can also generate a single migration:
 
 ```typescript
-import { generateMigrationSql } from "@vankyle-hub/storage-kysely";
+import { generateMigrationSql } from "@vankyle/storage-kysely";
 
 const sql = await generateMigrationSql("0001_init", "sqlite");
 ```

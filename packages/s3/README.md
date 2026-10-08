@@ -1,4 +1,4 @@
-# @vankyle-hub/storage-s3
+# @vankyle/storage-s3
 
 `IStorage` implementation for any S3-compatible object storage backend.
 
@@ -11,12 +11,12 @@
 - Backblaze B2 (S3-compatible)
 - Any storage that speaks the S3 signature protocol
 
-> **Cloudflare R2 Worker Binding:** If you are running inside a Cloudflare Worker and want to use `env.BUCKET` directly, use [`@vankyle-hub/storage-cloudflare`](../cloudflare/README.md) instead.
+> **Cloudflare R2 Worker Binding:** If you are running inside a Cloudflare Worker and want to use `env.BUCKET` directly, use [`@vankyle/storage-cloudflare`](../cloudflare/README.md) instead.
 
 ## Installation
 
 ```bash
-pnpm add @vankyle-hub/storage-s3 @vankyle-hub/storage-core @vankyle-hub/storage-shared
+pnpm add @vankyle/storage-s3 @vankyle/storage-core @vankyle/storage-shared
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ pnpm add @vankyle-hub/storage-s3 @vankyle-hub/storage-core @vankyle-hub/storage-
 ### AWS S3
 
 ```typescript
-import { S3Storage } from "@vankyle-hub/storage-s3";
+import { S3Storage } from "@vankyle/storage-s3";
 
 const storage = new S3Storage({
   clientConfig: {

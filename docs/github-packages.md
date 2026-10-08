@@ -59,14 +59,12 @@ Two publish targets are handled by a single workflow:
 - [.github/workflows/ci.yml](../.github/workflows/ci.yml) runs build, typecheck, and tests on pushes and pull requests.
 - [.github/workflows/publish-packages.yml](../.github/workflows/publish-packages.yml) publishes to **both** npmjs.com and GitHub Packages when a GitHub Release is published, or when you run it manually.
 
-#### Required secrets
+#### Authentication
 
-| Secret | Where | Purpose |
+| Registry | Mechanism | Setup |
 |---|---|---|
-| `NPM_TOKEN` | Repository secret | Authenticates to npmjs.com (`Automation` type token from npmjs.com) |
-| `GITHUB_TOKEN` | Automatic | Authenticates to GitHub Packages (used by `publish-github.mjs`) |
-
-To add the npm token: GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret** → name it `NPM_TOKEN`.
+| npmjs.com | [OIDC trusted publishing](https://docs.npmjs.com/trusted-publishers) — no long-lived token | On npmjs.com, configure each `@vankyle/*` package to trust this repository's `publish-packages.yml` workflow. The workflow already requests `id-token: write` and upgrades to npm CLI ≥ 11.5.1, which performs the OIDC exchange automatically |
+| GitHub Packages | `GITHUB_TOKEN` | Automatic — no setup needed beyond the Actions permissions above |
 
 Recommended release flow:
 

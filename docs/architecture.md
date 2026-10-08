@@ -34,7 +34,7 @@ The system is built around four architectural ideas:
 
 ## Package Overview
 
-### `packages/core` — `@vankyle-hub/storage-core`
+### `packages/core` — `@vankyle/storage-core`
 
 The heart of the system. Contains:
 
@@ -48,7 +48,7 @@ The heart of the system. Contains:
 
 `core` has no dependency on any provider SDK. It only depends on `shared` and `zod`.
 
-### `packages/shared` — `@vankyle-hub/storage-shared`
+### `packages/shared` — `@vankyle/storage-shared`
 
 Cross-package infrastructure that is not specific to any domain concept:
 
@@ -61,7 +61,7 @@ Cross-package infrastructure that is not specific to any domain concept:
 
 `shared` must not import from `core` or any provider package.
 
-### `packages/s3` — `@vankyle-hub/storage-s3`
+### `packages/s3` — `@vankyle/storage-s3`
 
 `IStorage` implementation for any S3-compatible object storage:
 
@@ -74,21 +74,21 @@ Cross-package infrastructure that is not specific to any domain concept:
 
 Provides: multipart upload, presigned read/put/upload-part URLs.
 
-### `packages/azure` — `@vankyle-hub/storage-azure`
+### `packages/azure` — `@vankyle/storage-azure`
 
 `IStorage` and `IMetadataStore` implementations for the Azure ecosystem:
 
 - **`AzureBlobStorage`** — `IStorage` backed by Azure Blob Storage with SAS token support. Simulates multipart upload via Azure Block Blob staging (`stageBlock` / `commitBlockList`).
 - **`CosmosMetadataStore`** — `IMetadataStore` backed by Azure Cosmos DB. All entity types are stored in a single container, discriminated by a `type` field.
 
-### `packages/cloudflare` — `@vankyle-hub/storage-cloudflare`
+### `packages/cloudflare` — `@vankyle/storage-cloudflare`
 
 Adapters for the Cloudflare Workers runtime:
 
 - **`R2BindingStorage`** — `IStorage` using the native R2 bucket binding API (`env.BUCKET`). Supports multipart upload via the native R2 multipart API. Cannot issue presigned URLs (Worker binding limitation).
 - **`D1Dialect`** — Kysely `Dialect` implementation for Cloudflare D1, enabling `KyselyMetadataStore` to run on D1 without any code changes.
 
-### `packages/kysely` — `@vankyle-hub/storage-kysely`
+### `packages/kysely` — `@vankyle/storage-kysely`
 
 `IMetadataStore` implementation powered by [Kysely](https://kysely.dev/):
 

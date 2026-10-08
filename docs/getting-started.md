@@ -25,30 +25,30 @@ This guide walks through the most common usage patterns. For the full design rat
 
 `core` and `shared` are always required. Add provider packages as needed.
 
-If you are installing from GitHub Packages, configure the registry and authentication first as described in [github-packages.md](github-packages.md).
+The packages are published to npmjs.com under the `@vankyle` scope and install from there by default — no authentication or registry configuration is required. GitHub Packages is also available as an alternative mirror under the `@vankyle-hub` scope; installing from it requires configuring the registry and authentication first as described in [github-packages.md](github-packages.md).
 
 ```bash
-pnpm add @vankyle-hub/storage-core @vankyle-hub/storage-shared
+pnpm add @vankyle/storage-core @vankyle/storage-shared
 ```
 
 | Scenario | Additional packages |
 |---|---|
-| AWS S3 / R2 HTTP / MinIO | `@vankyle-hub/storage-s3` |
-| Azure Blob + Cosmos DB | `@vankyle-hub/storage-azure` |
-| Cloudflare R2 Binding + D1 | `@vankyle-hub/storage-cloudflare` |
-| PostgreSQL / MySQL / SQLite | `@vankyle-hub/storage-kysely` + `kysely` |
+| AWS S3 / R2 HTTP / MinIO | `@vankyle/storage-s3` |
+| Azure Blob + Cosmos DB | `@vankyle/storage-azure` |
+| Cloudflare R2 Binding + D1 | `@vankyle/storage-cloudflare` |
+| PostgreSQL / MySQL / SQLite | `@vankyle/storage-kysely` + `kysely` |
 
 ---
 
 ## S3 + PostgreSQL (Kysely)
 
 ```typescript
-import { S3Storage } from "@vankyle-hub/storage-s3";
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
-import { DefaultStorageService } from "@vankyle-hub/storage-core";
+import { S3Storage } from "@vankyle/storage-s3";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
+import { DefaultStorageService } from "@vankyle/storage-core";
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 const storage = new S3Storage({
   clientConfig: {
@@ -100,8 +100,8 @@ Everything else is identical to the PostgreSQL example.
 ## Azure Blob + Cosmos DB
 
 ```typescript
-import { AzureBlobStorage, CosmosMetadataStore } from "@vankyle-hub/storage-azure";
-import { DefaultStorageService } from "@vankyle-hub/storage-core";
+import { AzureBlobStorage, CosmosMetadataStore } from "@vankyle/storage-azure";
+import { DefaultStorageService } from "@vankyle/storage-core";
 
 const storage = new AzureBlobStorage({
   accountName: process.env.AZURE_STORAGE_ACCOUNT!,
@@ -139,11 +139,11 @@ const metadata = new CosmosMetadataStore({
 // [[r2_buckets]]  binding = "BUCKET", bucket_name = "my-bucket"
 // [[d1_databases]] binding = "DB",    database_name = "my-db"
 
-import { R2BindingStorage, D1Dialect } from "@vankyle-hub/storage-cloudflare";
-import { KyselyMetadataStore } from "@vankyle-hub/storage-kysely";
-import { DefaultStorageService } from "@vankyle-hub/storage-core";
+import { R2BindingStorage, D1Dialect } from "@vankyle/storage-cloudflare";
+import { KyselyMetadataStore } from "@vankyle/storage-kysely";
+import { DefaultStorageService } from "@vankyle/storage-core";
 import { Kysely } from "kysely";
-import type { StorageDatabase } from "@vankyle-hub/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
 
 interface Env {
   BUCKET: R2Bucket;
@@ -184,7 +184,7 @@ This is the most efficient pattern when your storage provider supports presigned
 **Step 1 — Backend: create session and get upload URL**
 
 ```typescript
-import { UploadMode } from "@vankyle-hub/storage-core";
+import { UploadMode } from "@vankyle/storage-core";
 
 const { session, uploadUrl } = await storageService.createUploadSession({
   fileName: "photo.jpg",
@@ -348,7 +348,7 @@ Migrations are database-type-aware. Pass `'postgres'` or `'sqlite'` to get DDL t
 
 ```typescript
 import { Migrator } from "kysely";
-import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
+import { createMigrationProvider } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({
   db,
@@ -366,8 +366,8 @@ Use `'sqlite'` with the Kysely `Migrator` inside your Worker or a setup script:
 
 ```typescript
 import { Migrator, Kysely } from "kysely";
-import { createMigrationProvider } from "@vankyle-hub/storage-kysely";
-import { D1Dialect } from "@vankyle-hub/storage-cloudflare";
+import { createMigrationProvider } from "@vankyle/storage-kysely";
+import { D1Dialect } from "@vankyle/storage-cloudflare";
 
 const db = new Kysely({ dialect: new D1Dialect(env.DB) });
 const migrator = new Migrator({
@@ -382,7 +382,7 @@ await migrator.migrateToLatest();
 Use `generateAllMigrationSql` at build time to produce `.sql` files for `wrangler d1 migrations apply`:
 
 ```typescript
-import { generateAllMigrationSql } from "@vankyle-hub/storage-kysely";
+import { generateAllMigrationSql } from "@vankyle/storage-kysely";
 import { writeFileSync } from "node:fs";
 
 const migrations = await generateAllMigrationSql("sqlite");

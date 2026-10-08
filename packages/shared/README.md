@@ -1,4 +1,4 @@
-# @vankyle-hub/storage-shared
+# @vankyle/storage-shared
 
 Cross-package utilities, error types, and foundational TypeScript types for `vankyle-storage`.
 
@@ -26,7 +26,7 @@ All errors extend `BaseError`, which extends the native `Error` class and adds a
 A lightweight railway-oriented result type. No dependency on external libraries.
 
 ```typescript
-import { ok, err, type Result } from "@vankyle-hub/storage-shared";
+import { ok, err, type Result } from "@vankyle/storage-shared";
 
 function divide(a: number, b: number): Result<number, Error> {
   if (b === 0) return err(new Error("division by zero"));
@@ -56,8 +56,8 @@ if (result.ok) {
 ### Utilities
 
 ```typescript
-import { assert, assertNever } from "@vankyle-hub/storage-shared";
-import { getRequiredEnv, getOptionalEnv } from "@vankyle-hub/storage-shared";
+import { assert, assertNever } from "@vankyle/storage-shared";
+import { getRequiredEnv, getOptionalEnv } from "@vankyle/storage-shared";
 
 // Assertion (throws with message if falsy)
 assert(user !== null, "user must exist");

@@ -1,4 +1,4 @@
-# @vankyle-hub/storage-core
+# @vankyle/storage-core
 
 Domain models, port interfaces, and the default application service for `vankyle-storage`.
 
@@ -21,7 +21,7 @@ This package has no dependency on any cloud SDK. It defines *what the system mod
 
 ## Dependencies
 
-- `@vankyle-hub/storage-shared` — errors, `Result` type, utilities
+- `@vankyle/storage-shared` — errors, `Result` type, utilities
 - `zod` — schema validation
 
 ## Key interfaces
@@ -57,7 +57,7 @@ The public API for application code. Orchestrates uploads, manages blob and file
 The reference implementation of `IStorageService`. Inject it with any `IStorage` + `IMetadataStore` combination.
 
 ```typescript
-import { DefaultStorageService, UploadMode } from "@vankyle-hub/storage-core";
+import { DefaultStorageService, UploadMode } from "@vankyle/storage-core";
 
 const service = new DefaultStorageService({
   storage,   // IStorage
@@ -82,7 +82,7 @@ By default, `DefaultObjectKeyPolicy` generates keys as:
 Override by implementing `IObjectKeyPolicy`:
 
 ```typescript
-import type { IObjectKeyPolicy, ObjectKeyPolicyInput } from "@vankyle-hub/storage-core";
+import type { IObjectKeyPolicy, ObjectKeyPolicyInput } from "@vankyle/storage-core";
 
 class MyKeyPolicy implements IObjectKeyPolicy {
   generate(input: ObjectKeyPolicyInput): string {
