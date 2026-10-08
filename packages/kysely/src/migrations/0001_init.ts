@@ -1,4 +1,5 @@
-import type { Kysely, Migration } from "kysely";
+import type { Kysely } from "kysely";
+import type { Migration } from "kysely/migration";
 import { sql } from "kysely";
 import type { DatabaseType } from "./types";
 import { getColumnTypes } from "./types";

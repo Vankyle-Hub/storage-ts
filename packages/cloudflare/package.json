@@ -33,9 +33,9 @@
   "homepage": "https://github.com/Vankyle-Hub/storage-ts",
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
+    "@cloudflare/workers-types": "^4.20260416.2",
     "@vankyle/storage-core": "workspace:*",
     "@vankyle/storage-shared": "workspace:*",
-    "@cloudflare/workers-types": "^4.20260416.2",
-    "kysely": "^0.28.17"
+    "kysely": "^0.29.6"
   }
 }

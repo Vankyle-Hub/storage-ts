@@ -1,4 +1,4 @@
-import type { Migration, MigrationProvider } from "kysely";
+import type { Migration, MigrationProvider } from "kysely/migration";
 import type { DatabaseType } from "./types";
 import { createMigration0001 } from "./0001_init";
 
