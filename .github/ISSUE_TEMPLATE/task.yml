@@ -1,0 +1,41 @@
+name: Task
+description: Track a scoped engineering task derived from an accepted feature or plan.
+title: "task: "
+labels:
+  - task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tasks implement an already-accepted direction. Link the parent feature request and the governing design document.
+
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue
+      description: The feature request or epic this task belongs to.
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Affected packages
+      placeholder: core / s3 / azure / cloudflare / kysely / shared
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should be true when this task is done? Keep acceptance details in the PR.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and links
+      description: Link the design doc sections, related issues, or prior PRs.

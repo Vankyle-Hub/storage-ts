@@ -2,7 +2,7 @@
 
 This document describes the design principles, package responsibilities, domain model, and interface contracts for `vankyle-storage`.
 
-See also: [getting-started.md](getting-started.md) · [migrations.md](migrations.md) · [github-packages.md](github-packages.md)
+See also: [getting-started.md](getting-started.md) · [migrations.md](migrations.md) · [github-packages.md](github-packages.md) · [tiered-storage.md](tiered-storage.md)
 
 ## Table of Contents
 
