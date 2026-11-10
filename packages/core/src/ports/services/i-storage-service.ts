@@ -4,6 +4,7 @@ import type { UploadedPart } from "@/domain/models/uploaded-part";
 import type { Blob } from "@/domain/models/blob";
 import type { File } from "@/domain/models/file";
 import type { FileVersion } from "@/domain/models/file-version";
+import type { Tag } from "@/domain/models/tag";
 import type { SignedAccess } from "@/domain/value-objects/signed-access";
 import type { UploadMode } from "@/domain/enums/upload-status";
 
@@ -130,6 +131,35 @@ export interface DeleteFileRequest {
   readonly fileId: string;
 }
 
+export interface CreateTagRequest {
+  readonly ownerId: string;
+  readonly name: string;
+  readonly metadata?: JsonObject | undefined;
+}
+
+export interface AddTagToFileRequest {
+  readonly ownerId: string;
+  readonly fileId: string;
+  readonly tagName: string;
+  readonly metadata?: JsonObject | undefined;
+}
+
+export interface RemoveTagFromFileRequest {
+  readonly ownerId: string;
+  readonly fileId: string;
+  readonly tagName: string;
+}
+
+export interface ListFileTagsRequest {
+  readonly ownerId: string;
+  readonly fileId: string;
+}
+
+export interface ListFilesByTagRequest {
+  readonly ownerId: string;
+  readonly tagName: string;
+}
+
 /**
  * Session lifecycle rules shared by every operation that writes to an upload
  * session (`getUploadPartUrl`, `uploadPart`, `uploadObject`, `registerPart`,
@@ -241,4 +271,16 @@ export interface IStorageService {
   getBlob(blobId: string): Promise<Blob | undefined>;
 
   deleteFile(request: DeleteFileRequest): Promise<void>;
+
+  createTag(request: CreateTagRequest): Promise<Tag>;
+
+  listTags(ownerId: string): Promise<Tag[]>;
+
+  addTagToFile(request: AddTagToFileRequest): Promise<Tag>;
+
+  removeTagFromFile(request: RemoveTagFromFileRequest): Promise<void>;
+
+  listFileTags(request: ListFileTagsRequest): Promise<Tag[]>;
+
+  listFilesByTag(request: ListFilesByTagRequest): Promise<File[]>;
 }

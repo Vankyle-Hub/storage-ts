@@ -4,6 +4,7 @@ export {
   KyselyUploadSessionStore,
   KyselyBlobStore,
   KyselyFileStore,
+  KyselyTagStore,
 } from "@/metadata/stores/index";
 export type {
   StorageDatabase,
@@ -13,6 +14,8 @@ export type {
   BlobReferencesTable,
   FilesTable,
   FileVersionsTable,
+  TagsTable,
+  FileTagsTable,
 } from "@/schema/index";
 export * as migrations from "@/migrations/index";
 export {

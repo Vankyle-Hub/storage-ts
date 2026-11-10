@@ -228,6 +228,29 @@ describe.skipIf(!sqlite)("KyselyMetadataStore on SQLite", () => {
     expect(fetched?.abortedAt).toBeUndefined();
   });
 
+  it("stores tags and file tags with ISO-8601 UTC time values", async () => {
+    await metadata.files.createFile({ id: "f1", displayName: "a.txt", ownerId: "owner-1" });
+    const tag = await metadata.tags.createTag({ ownerId: "owner-1", name: "Reports" });
+    const again = await metadata.tags.getTagByName("owner-1", "reports");
+    expect(again?.id).toBe(tag.id);
+    expect(Math.abs(tag.createdAt.getTime() - Date.now())).toBeLessThan(5_000);
+
+    const link = await metadata.tags.addTagToFile({ ownerId: "owner-1", fileId: "f1", tagId: tag.id });
+    expect(link.createdAt).toBeInstanceOf(Date);
+    // Adding the same tag twice returns the existing link.
+    const repeat = await metadata.tags.addTagToFile({ ownerId: "owner-1", fileId: "f1", tagId: tag.id });
+    expect(repeat.createdAt.getTime()).toBe(link.createdAt.getTime());
+
+    expect((await metadata.tags.listTagsForFile("owner-1", "f1")).map((t) => t.name)).toEqual(["Reports"]);
+    expect((await metadata.tags.listFilesByTag("owner-1", tag.id)).map((f) => f.id)).toEqual(["f1"]);
+
+    for (const [table, column] of [["tags", "created_at"], ["tags", "updated_at"], ["file_tags", "created_at"]]) {
+      const rows = database.prepare(`select "${column}" as v from "${table}"`).all() as { v: string }[];
+      expect(rows).toHaveLength(1);
+      expect(rows[0]!.v).toMatch(ISO_UTC);
+    }
+  });
+
   it("stores text that sorts chronologically", async () => {
     for (const [id, iso] of [
       ["later", "2026-03-01T00:00:00.000Z"],

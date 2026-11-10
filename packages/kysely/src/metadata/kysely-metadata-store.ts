@@ -6,11 +6,13 @@ import { KyselyBlobStore } from "@/metadata/stores/kysely-blob-store";
 import { KyselyFileStore } from "@/metadata/stores/kysely-file-store";
 import { detectDatabaseType, type KyselyStoreOptions } from "@/metadata/store-dialect";
 import type { DatabaseType } from "@/migrations/types";
+import { KyselyTagStore } from "@/metadata/stores/kysely-tag-store";
 
 export class KyselyMetadataStore implements IMetadataStore {
   readonly uploads: KyselyUploadSessionStore;
   readonly blobs: KyselyBlobStore;
   readonly files: KyselyFileStore;
+  readonly tags: KyselyTagStore;
   /** The database type in effect — given in `options`, or detected. */
   readonly databaseType: DatabaseType;
 
@@ -24,5 +26,6 @@ export class KyselyMetadataStore implements IMetadataStore {
     this.uploads = new KyselyUploadSessionStore(db, resolved);
     this.blobs = new KyselyBlobStore(db, resolved);
     this.files = new KyselyFileStore(db, resolved);
+    this.tags = new KyselyTagStore(db, resolved);
   }
 }

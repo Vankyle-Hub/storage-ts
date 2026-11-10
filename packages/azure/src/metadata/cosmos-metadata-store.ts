@@ -4,6 +4,7 @@ import type { CosmosMetadataOptions } from "@/types/cosmos-options";
 import { CosmosUploadSessionStore } from "@/metadata/stores/cosmos-upload-session-store";
 import { CosmosBlobStore } from "@/metadata/stores/cosmos-blob-store";
 import { CosmosFileStore } from "@/metadata/stores/cosmos-file-store";
+import { CosmosTagStore } from "@/metadata/stores/cosmos-tag-store";
 
 const DEFAULT_CONTAINER_ID = "storage";
 
@@ -11,6 +12,7 @@ export class CosmosMetadataStore implements IMetadataStore {
   readonly uploads: CosmosUploadSessionStore;
   readonly blobs: CosmosBlobStore;
   readonly files: CosmosFileStore;
+  readonly tags: CosmosTagStore;
 
   constructor(container: Container);
   constructor(options: CosmosMetadataOptions);
@@ -46,5 +48,6 @@ export class CosmosMetadataStore implements IMetadataStore {
     this.uploads = new CosmosUploadSessionStore(container);
     this.blobs = new CosmosBlobStore(container);
     this.files = new CosmosFileStore(container);
+    this.tags = new CosmosTagStore(container);
   }
 }
