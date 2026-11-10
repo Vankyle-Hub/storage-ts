@@ -100,6 +100,17 @@ export interface IStorageService {
 
   registerPart(request: RegisterPartRequest): Promise<UploadedPart>;
 
+  /**
+   * Finalises the upload, verifies the stored object, and creates the blob
+   * (and optionally file) records.
+   *
+   * @throws UploadSizeMismatchError when the session declared `expectedSize`
+   *   and the stored object has a different size.
+   * @throws UploadEtagMismatchError when `request.etag` is given and differs
+   *   from the stored object's ETag (compared verbatim).
+   *
+   * Both are raised before any metadata is written; the session stays open.
+   */
   completeUploadSession(request: CompleteUploadSessionRequest): Promise<CompleteUploadSessionResponse>;
 
   abortUploadSession(sessionId: string): Promise<void>;
