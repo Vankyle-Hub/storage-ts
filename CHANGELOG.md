@@ -18,6 +18,9 @@
   Aborting an already aborted session does nothing. (#61)
 - **`IUploadSessionStore.addPart` must replace an existing part with the same
   part number.** Custom metadata stores need to implement this. (#62)
+- **`createUploadSession` rejects an `expectedSize` that is not a
+  non-negative integer** with `ValidationError` (`field: "expectedSize"`).
+  (#63)
 
 ### Added
 
@@ -25,6 +28,16 @@
   `status`, `operation`) and `UploadSessionExpiredError`
   (`UPLOAD_SESSION_EXPIRED`; `sessionId`, `expiresAt`) in
   `@vankyle/storage-shared`. (#61)
+- **Size-bound presigned upload URLs.** `CreatePutUrlInput` and
+  `CreateUploadPartUrlInput` take an optional `contentLength`, and
+  `GetUploadPartUrlRequest` takes an optional `contentLength` for the part.
+  `S3Storage` signs it (`content-length` becomes a signed header), so S3
+  rejects an upload of any other size with `403 SignatureDoesNotMatch`
+  instead of storing it. For single-mode sessions `createUploadSession`
+  passes `expectedSize` automatically. Providers that cannot enforce a size
+  (Azure SAS) ignore it; `completeUploadSession` still verifies the size.
+  (#63)
+- `StorageCapabilities.signedContentLength` — `true` on `S3Storage`. (#63)
 
 ### Fixed
 

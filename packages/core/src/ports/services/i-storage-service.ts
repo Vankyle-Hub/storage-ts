@@ -13,6 +13,14 @@ export interface CreateUploadSessionRequest {
   readonly fileName?: string | undefined;
   readonly mimeType?: string | undefined;
   readonly mode?: UploadMode | undefined;
+  /**
+   * Size of the object in bytes, as declared by the client. Verified by
+   * `completeUploadSession`. For a single-mode session it is also bound
+   * into the presigned `uploadUrl` when the provider supports it
+   * (`capabilities.signedContentLength`), so the upload itself is refused
+   * if the body has another size. Must be a non-negative integer, otherwise
+   * `ValidationError` (`field: "expectedSize"`).
+   */
   readonly expectedSize?: number | undefined;
   readonly expectedSha256?: string | undefined;
   readonly ownerId?: string | undefined;
@@ -29,6 +37,13 @@ export interface CreateUploadSessionResponse {
 export interface GetUploadPartUrlRequest {
   readonly sessionId: string;
   readonly partNumber: number;
+  /**
+   * Size in bytes of the part the client is about to upload. When given and
+   * the provider supports it (`capabilities.signedContentLength`), the URL
+   * only accepts a body of exactly this size. Must be a non-negative
+   * integer, otherwise `ValidationError` (`field: "contentLength"`).
+   */
+  readonly contentLength?: number | undefined;
 }
 
 export interface UploadPartRequest {
@@ -135,6 +150,8 @@ export interface IStorageService {
    *
    * @throws ValidationError (`field: "objectKey"`) when the generated object
    *   key is empty or longer than 1024 UTF-8 bytes.
+   * @throws ValidationError (`field: "expectedSize"`) when `expectedSize` is
+   *   given and is not a non-negative integer.
    */
   createUploadSession(request: CreateUploadSessionRequest): Promise<CreateUploadSessionResponse>;
 

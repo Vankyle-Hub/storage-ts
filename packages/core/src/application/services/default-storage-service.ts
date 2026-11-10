@@ -70,6 +70,9 @@ export class DefaultStorageService implements IStorageService {
     request: CreateUploadSessionRequest,
   ): Promise<CreateUploadSessionResponse> {
     const mode = request.mode ?? UploadMode.Multipart;
+    // The declared size ends up in a signature and in the completion check;
+    // refuse nonsense before anything is opened or stored.
+    assertByteCount(request.expectedSize, "expectedSize");
     const objectKey = this.objectKeyPolicy.generate({
       fileName: request.fileName,
       mimeType: request.mimeType,
@@ -98,6 +101,11 @@ export class DefaultStorageService implements IStorageService {
           bucket: this.bucket,
           objectKey,
           contentType: request.mimeType,
+          // Bind the declared size into the URL where the provider can
+          // enforce it, so a client cannot upload more than it declared.
+          // Providers that cannot (Azure SAS) ignore it; the size is then
+          // only verified by completeUploadSession.
+          contentLength: request.expectedSize,
           expiresInSeconds:
             request.expiresInSeconds ?? this.defaultUploadExpiresInSeconds,
         });
@@ -134,6 +142,7 @@ export class DefaultStorageService implements IStorageService {
   }
 
   async getUploadPartUrl(request: GetUploadPartUrlRequest): Promise<SignedAccess> {
+    assertByteCount(request.contentLength, "contentLength");
     const session = await this.requireSession(request.sessionId);
 
     if (!this.storage.createUploadPartUrl) {
@@ -149,6 +158,9 @@ export class DefaultStorageService implements IStorageService {
 
     return this.storage.createUploadPartUrl({
       bucket: session.bucket,
+      // Only the caller knows how the file is split into parts, so the part
+      // size comes from the request, not from the session.
+      contentLength: request.contentLength,
       objectKey: session.objectKey,
       providerUploadId: session.providerUploadId,
       partNumber: request.partNumber,
@@ -528,5 +540,23 @@ export class DefaultStorageService implements IStorageService {
       throw new MetadataNotFoundError("UploadSession", sessionId);
     }
     return session;
+  }
+}
+
+/**
+ * A byte count supplied by the caller must be a non-negative integer (0 is
+ * a valid size). `undefined` means "not declared" and passes.
+ *
+ * @throws ValidationError with the given field name otherwise.
+ */
+function assertByteCount(value: number | undefined, field: string): void {
+  if (value === undefined) {
+    return;
+  }
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ValidationError(
+      `${field} must be a non-negative integer number of bytes, got ${value}`,
+      field,
+    );
   }
 }

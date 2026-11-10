@@ -289,6 +289,7 @@ interface StorageCapabilities {
   signedPutUrl: boolean;
   signedPartUrl: boolean;
   serverSideCopy?: boolean;
+  signedContentLength?: boolean;  // presigned upload URLs enforce their contentLength
 }
 ```
 
@@ -457,6 +458,8 @@ Use `cloudflare` only when you are running inside a Cloudflare Worker and have a
 | `R2BindingStorage` | ✓ | ✗ | ✗ | ✗ |
 
 When `signedPutUrl` is `false` (e.g. R2 Binding), `createUploadSession` returns no `uploadUrl` for single-mode uploads. The client must upload through your server, which writes the object with `uploadObject` (single mode) or `uploadPart` (multipart mode).
+
+**Size-bound upload URLs.** `CreatePutUrlInput` and `CreateUploadPartUrlInput` take an optional `contentLength`. A provider with `signedContentLength: true` (`S3Storage`) binds it into the signature, so the provider itself rejects a request body of any other size; providers without the capability (`AzureBlobStorage` — a SAS token cannot constrain the body size) ignore it. `DefaultStorageService` passes a single-mode session's `expectedSize` to `createPutUrl`, and `GetUploadPartUrlRequest.contentLength` to `createUploadPartUrl`. The size check in `completeUploadSession` applies regardless and is the only check where the URL is not size-bound.
 
 Part operations (`getUploadPartUrl`, `uploadPart`) apply to multipart sessions only and reject a single-mode session with `ValidationError` (`field: "mode"`); `uploadObject` likewise rejects a multipart session.
 

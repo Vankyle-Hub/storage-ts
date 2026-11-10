@@ -198,11 +198,14 @@ const { session, uploadUrl } = await storageService.createUploadSession({
   fileName: "photo.jpg",
   mimeType: "image/jpeg",
   mode: UploadMode.Single,
+  expectedSize: 348_112, // bytes, as announced by the client
   ownerId: currentUser.id,
 });
 
 // Send session.id and uploadUrl to the client
 ```
+
+Pass `expectedSize` whenever the client can tell you the file size. On S3-compatible storage it is bound into the presigned URL: an upload of any other size is rejected by the storage itself (HTTP 403) and nothing is stored. On Azure Blob the URL cannot be size-bound, so the size is checked when you call `completeUploadSession`. Either way `completeUploadSession` verifies it.
 
 **Step 2 — Client: PUT directly to storage**
 
@@ -318,6 +321,8 @@ const response = await fetch(signedAccess.url, {
 });
 const etag = response.headers.get("ETag");
 ```
+
+To stop a client from uploading a part larger than agreed, pass the part's size as `contentLength` to `getUploadPartUrl` in step 2. On S3-compatible storage the URL then only accepts a body of exactly that size.
 
 **Step 4 — Backend: register completed parts**
 
