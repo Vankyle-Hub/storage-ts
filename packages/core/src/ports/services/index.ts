@@ -4,6 +4,8 @@ export type {
   CreateUploadSessionResponse,
   GetUploadPartUrlRequest,
   UploadPartRequest,
+  UploadObjectRequest,
+  UploadObjectResponse,
   RegisterPartRequest,
   CompleteUploadSessionRequest,
   CompleteUploadSessionResponse,

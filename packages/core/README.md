@@ -43,7 +43,8 @@ The public API for application code. Orchestrates uploads, manages blob and file
 | `createUploadSession` | Starts a new upload session, optionally returning a presigned URL |
 | `getUploadSession` | Retrieves an existing session by ID, including all fields saved at creation |
 | `getUploadPartUrl` | Returns a presigned URL for a specific part (multipart, client-direct) |
-| `uploadPart` | Proxies a part upload through the server |
+| `uploadPart` | Proxies a part upload through the server (multipart sessions) |
+| `uploadObject` | Writes the whole object of a single-mode session through the server |
 | `registerPart` | Records a part that the client uploaded directly |
 | `completeUploadSession` | Finalises the upload and creates blob + optional file records |
 | `abortUploadSession` | Cancels the upload and cleans up the provider session |

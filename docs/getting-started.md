@@ -11,6 +11,7 @@ This guide walks through the most common usage patterns. For the full design rat
 - [Cloudflare Worker: R2 Binding + D1](#cloudflare-worker-r2-binding--d1)
 - [Upload patterns](#upload-patterns)
   - [Single file — client direct upload](#single-file--client-direct-upload)
+  - [Single file — server-side upload](#single-file--server-side-upload)
   - [Multipart — client-direct parts](#multipart--client-direct-parts)
   - [Multipart — server-proxied parts](#multipart--server-proxied-parts)
 - [Retrieving an upload session](#retrieving-an-upload-session)
@@ -171,7 +172,7 @@ export default {
 };
 ```
 
-> **Note:** `R2BindingStorage` does not support presigned URLs. For single-mode uploads the client must send data through your Worker endpoint, which then calls `service.uploadPart(...)`.
+> **Note:** `R2BindingStorage` does not support presigned URLs, so `createUploadSession` returns no `uploadUrl`. For single-mode uploads the client sends the data to your Worker endpoint, which writes it with `service.uploadObject(...)` and then calls `service.completeUploadSession(...)` — see [Single file — server-side upload](#single-file--server-side-upload). `service.uploadPart(...)` is for multipart sessions only.
 
 ---
 
@@ -213,6 +214,62 @@ const { blob, file, fileVersion } = await storageService.completeUploadSession({
   sessionId: session.id,
   createFile: { displayName: "My Photo" },
 });
+```
+
+---
+
+### Single file — server-side upload
+
+Use this when the server already holds the bytes: the client posts the file to your endpoint, your code generated the content, or the storage provider cannot issue presigned PUT URLs (R2 Binding). The object is written with one `IStorage.putObject` call — no multipart session is needed.
+
+The flow is `createUploadSession` → `uploadObject` → `completeUploadSession`:
+
+```typescript
+import { UploadMode } from "@vankyle/storage-core";
+
+// 1. Create a single-mode session. `uploadUrl` is not needed here.
+const { session } = await storageService.createUploadSession({
+  fileName: "report.pdf",
+  mimeType: "application/pdf",
+  mode: UploadMode.Single,
+  expectedSize: bytes.byteLength, // optional; verified on complete
+  ownerId: currentUser.id,
+});
+
+// 2. Write the bytes through the server.
+const { etag } = await storageService.uploadObject({
+  sessionId: session.id,
+  body: bytes,                    // Uint8Array | ReadableStream<Uint8Array>
+});
+
+// 3. Verify the stored object and create the blob (and file) records.
+const { blob, file } = await storageService.completeUploadSession({
+  sessionId: session.id,
+  etag,                           // optional; verified against the stored object
+  createFile: { displayName: "Q1 Report" },
+});
+```
+
+Things to know:
+
+- **Content length.** For a `Uint8Array` the byte length is used. For a `ReadableStream`, pass `contentLength`; if you omit it, the session's `expectedSize` is used. Some providers (S3) reject or buffer a stream of unknown length.
+- **Content type** comes from the session's `mimeType`.
+- **Nothing is final until `completeUploadSession`.** `uploadObject` stores the object and moves the session to `in-progress`; it does not create a blob. Calling `uploadObject` again before completing overwrites the object, so a failed write can simply be retried.
+- **Errors.** `uploadObject` throws `ValidationError` with `field: "mode"` for a multipart session (use `uploadPart` there) and with `field: "status"` for a session that is already completed or aborted. Conversely, `uploadPart` and `getUploadPartUrl` throw `ValidationError` with `field: "mode"` for a single-mode session.
+
+In a Cloudflare Worker with an R2 binding:
+
+```typescript
+if (request.method === "PUT" && url.pathname.startsWith("/upload/")) {
+  const sessionId = url.pathname.slice("/upload/".length);
+  await service.uploadObject({
+    sessionId,
+    body: request.body!,
+    contentLength: Number(request.headers.get("content-length")),
+  });
+  const { blob } = await service.completeUploadSession({ sessionId });
+  return Response.json({ blobId: blob.id });
+}
 ```
 
 ---
@@ -278,7 +335,7 @@ const { blob, file } = await storageService.completeUploadSession({
 
 ### Multipart — server-proxied parts
 
-Use this when the client cannot upload directly (e.g. R2 Binding, internal networks).
+Use this when the client cannot upload directly (e.g. R2 Binding, internal networks) and the file is too large for a single PUT. For files that fit in one request, prefer [Single file — server-side upload](#single-file--server-side-upload). `uploadPart` only accepts multipart sessions.
 
 ```typescript
 // In your upload endpoint (receives raw part stream from client)

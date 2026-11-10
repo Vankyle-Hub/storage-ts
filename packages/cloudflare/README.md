@@ -49,7 +49,7 @@ export default {
 | `signedPutUrl` | ✗ |
 | `signedPartUrl` | ✗ |
 
-Workers with R2 bindings cannot issue presigned URLs — all data transfers go through the Worker itself. For single-mode uploads, the client must POST to your Worker which calls `service.uploadPart(...)`.
+Workers with R2 bindings cannot issue presigned URLs — all data transfers go through the Worker itself. For single-mode uploads, the client must send the data to your Worker, which calls `service.uploadObject(...)` followed by `service.completeUploadSession(...)`. `service.uploadPart(...)` is for multipart sessions.
 
 ### Multipart upload
 

@@ -10,6 +10,8 @@ import type {
   CreateUploadSessionResponse,
   GetUploadPartUrlRequest,
   UploadPartRequest,
+  UploadObjectRequest,
+  UploadObjectResponse,
   RegisterPartRequest,
   CompleteUploadSessionRequest,
   CompleteUploadSessionResponse,
@@ -28,6 +30,7 @@ import { generateId } from "@/utils/ids";
 import type { IObjectKeyPolicy } from "@/application/policies/object-key-policy";
 import { DefaultObjectKeyPolicy } from "@/application/policies/object-key-policy";
 import type { FileVersion } from "@/domain/models/file-version";
+import { ValidationError } from "@vankyle/storage-shared";
 
 export interface DefaultStorageServiceOptions {
   readonly storage: IStorage;
@@ -128,6 +131,8 @@ export class DefaultStorageService implements IStorageService {
       throw new CapabilityNotSupportedError("signedPartUrl");
     }
 
+    this.assertMultipart(session, "getUploadPartUrl");
+
     if (!session.providerUploadId) {
       throw new MetadataNotFoundError("UploadSession", session.id);
     }
@@ -143,6 +148,8 @@ export class DefaultStorageService implements IStorageService {
 
   async uploadPart(request: UploadPartRequest): Promise<UploadedPart> {
     const session = await this.requireSession(request.sessionId);
+
+    this.assertMultipart(session, "uploadPart");
 
     if (!session.providerUploadId) {
       throw new MetadataNotFoundError("UploadSession", session.id);
@@ -172,6 +179,56 @@ export class DefaultStorageService implements IStorageService {
       etag: result.etag,
       checksumSha256: result.checksumSha256,
     });
+  }
+
+  async uploadObject(request: UploadObjectRequest): Promise<UploadObjectResponse> {
+    const session = await this.requireSession(request.sessionId);
+
+    if (session.mode !== UploadMode.Single) {
+      throw new ValidationError(
+        `Upload session ${session.id} is in ${session.mode} mode; uploadObject requires a single-mode session (use uploadPart for multipart)`,
+        "mode",
+      );
+    }
+
+    // Writing into a finished session would silently replace the object
+    // behind an existing blob record, or resurrect an aborted upload.
+    if (
+      session.status === UploadSessionStatus.Completed ||
+      session.status === UploadSessionStatus.Aborted
+    ) {
+      throw new ValidationError(
+        `Upload session ${session.id} is ${session.status}; it no longer accepts data`,
+        "status",
+      );
+    }
+
+    // Length: explicit value, else the byte length of an in-memory body,
+    // else the size declared at session creation (streams have no length).
+    const contentLength =
+      request.contentLength ??
+      (request.body instanceof Uint8Array
+        ? request.body.byteLength
+        : session.expectedSize);
+
+    const result = await this.storage.putObject({
+      bucket: session.bucket,
+      objectKey: session.objectKey,
+      body: request.body,
+      contentType: session.mimeType,
+      contentLength,
+    });
+
+    // The object is stored, but completeUploadSession still has to verify it
+    // and create the blob, so the session is in-progress, not completed.
+    const updated =
+      session.status === UploadSessionStatus.Pending
+        ? await this.metadata.uploads.updateSession(session.id, {
+            status: UploadSessionStatus.InProgress,
+          })
+        : session;
+
+    return { session: updated, etag: result.etag };
   }
 
   async registerPart(request: RegisterPartRequest): Promise<UploadedPart> {
@@ -384,6 +441,20 @@ export class DefaultStorageService implements IStorageService {
           status: BlobStatus.Orphaned,
         });
       }
+    }
+  }
+
+  /**
+   * Part operations only exist for multipart sessions. A single-mode session
+   * has no provider upload to attach parts to, so point the caller at the
+   * single-mode write path instead of failing on the missing upload id.
+   */
+  private assertMultipart(session: UploadSession, operation: string): void {
+    if (session.mode === UploadMode.Single) {
+      throw new ValidationError(
+        `Upload session ${session.id} is in single mode; ${operation} requires a multipart session (use uploadObject for single mode)`,
+        "mode",
+      );
     }
   }
 

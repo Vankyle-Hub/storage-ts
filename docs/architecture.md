@@ -338,7 +338,8 @@ interface IStorageService {
   createUploadSession(req): Promise<CreateUploadSessionResponse>;
   getUploadSession(sessionId): Promise<UploadSession | undefined>;
   getUploadPartUrl(req): Promise<SignedAccess>;
-  uploadPart(req): Promise<UploadedPart>;        // server-proxied upload
+  uploadPart(req): Promise<UploadedPart>;        // server-proxied part (multipart sessions)
+  uploadObject(req): Promise<UploadObjectResponse>; // server-side write (single sessions)
   registerPart(req): Promise<UploadedPart>;      // client-direct upload confirmation
   completeUploadSession(req): Promise<CompleteUploadSessionResponse>;
   abortUploadSession(sessionId): Promise<void>;
@@ -378,7 +379,8 @@ createUploadSession
          ↓
 getUploadSession                               (optional — retrieve current state)
          ↓
-getUploadPartUrl / uploadPart / registerPart   (zero or more)
+(multipart) getUploadPartUrl / uploadPart / registerPart   (zero or more)
+(single)    client PUT to uploadUrl, or uploadObject → IStorage.putObject
          ↓
 completeUploadSession
   ├─ (multipart) completeUploadSession → IStorage
@@ -430,7 +432,9 @@ Use `cloudflare` only when you are running inside a Cloudflare Worker and have a
 | `AzureBlobStorage` | ✓ (block staging) | ✓ | ✓ | ✗ |
 | `R2BindingStorage` | ✓ | ✗ | ✗ | ✗ |
 
-When `signedPutUrl` is `false` (e.g. R2 Binding), `createUploadSession` returns no `uploadUrl` for single-mode uploads. The client must upload through your server via `uploadPart`.
+When `signedPutUrl` is `false` (e.g. R2 Binding), `createUploadSession` returns no `uploadUrl` for single-mode uploads. The client must upload through your server, which writes the object with `uploadObject` (single mode) or `uploadPart` (multipart mode).
+
+Part operations (`getUploadPartUrl`, `uploadPart`) apply to multipart sessions only and reject a single-mode session with `ValidationError` (`field: "mode"`); `uploadObject` likewise rejects a multipart session.
 
 ---
 

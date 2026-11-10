@@ -38,6 +38,32 @@ export interface UploadPartRequest {
   readonly contentLength?: number | undefined;
 }
 
+/**
+ * Server-side write for a `single`-mode upload session.
+ *
+ * Use this when the server already holds the bytes (a proxied upload, a
+ * generated file, a provider without presigned PUT URLs such as an R2
+ * binding). The single-mode flow is
+ * `createUploadSession` → `uploadObject` → `completeUploadSession`.
+ */
+export interface UploadObjectRequest {
+  readonly sessionId: string;
+  readonly body: Uint8Array | ReadableStream<Uint8Array>;
+  /**
+   * Size of `body` in bytes. Optional for `Uint8Array` bodies (the byte
+   * length is used). For streams, falls back to the session's
+   * `expectedSize`; some providers reject a stream of unknown length.
+   */
+  readonly contentLength?: number | undefined;
+}
+
+export interface UploadObjectResponse {
+  /** The session after the write; its status is `in-progress`. */
+  readonly session: UploadSession;
+  /** Provider ETag of the stored object, when the provider reports one. */
+  readonly etag?: string | undefined;
+}
+
 export interface RegisterPartRequest {
   readonly sessionId: string;
   readonly partNumber: number;
@@ -96,7 +122,28 @@ export interface IStorageService {
 
   getUploadPartUrl(request: GetUploadPartUrlRequest): Promise<SignedAccess>;
 
+  /**
+   * Uploads one part of a `multipart` session through the server.
+   *
+   * @throws ValidationError (`field: "mode"`) when the session is in
+   *   `single` mode — use {@link IStorageService.uploadObject} instead.
+   */
   uploadPart(request: UploadPartRequest): Promise<UploadedPart>;
+
+  /**
+   * Writes the whole object of a `single`-mode session through the server
+   * (`IStorage.putObject`) and moves the session to `in-progress`. It does
+   * not create a blob: call `completeUploadSession` afterwards, which
+   * verifies the stored object. Calling it again before completion
+   * overwrites the object, so a failed write can simply be retried.
+   *
+   * @throws MetadataNotFoundError when the session does not exist.
+   * @throws ValidationError (`field: "mode"`) when the session is in
+   *   `multipart` mode — use `uploadPart` instead.
+   * @throws ValidationError (`field: "status"`) when the session is already
+   *   completed or aborted.
+   */
+  uploadObject(request: UploadObjectRequest): Promise<UploadObjectResponse>;
 
   registerPart(request: RegisterPartRequest): Promise<UploadedPart>;
 
