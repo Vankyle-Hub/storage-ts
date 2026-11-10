@@ -2,6 +2,7 @@ import type { FileVersion } from "@vankyle/storage-core";
 import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { FileVersionsTable } from "@/schema/database";
+import { ensureDate } from "@/mappers/timestamp";
 
 type FileVersionRow = Selectable<FileVersionsTable>;
 
@@ -23,8 +24,4 @@ export function fileVersionRowToModel(row: FileVersionRow): FileVersion {
 function parseJson(value: string | null): JsonObject | undefined {
   if (value === null) return undefined;
   return JSON.parse(value) as JsonObject;
-}
-
-function ensureDate(value: Date | string): Date {
-  return typeof value === "string" ? new Date(value) : value;
 }

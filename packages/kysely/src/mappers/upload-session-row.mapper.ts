@@ -4,6 +4,7 @@ import type { UploadMode, UploadSessionStatus } from "@vankyle/storage-core";
 import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { UploadSessionsTable } from "@/schema/database";
+import { ensureDate } from "@/mappers/timestamp";
 
 type UploadSessionRow = Selectable<UploadSessionsTable>;
 
@@ -35,8 +36,4 @@ export function uploadSessionRowToModel(row: UploadSessionRow): UploadSession {
 function parseJson(value: string | null): JsonObject | undefined {
   if (value === null) return undefined;
   return JSON.parse(value) as JsonObject;
-}
-
-function ensureDate(value: Date | string): Date {
-  return typeof value === "string" ? new Date(value) : value;
 }
