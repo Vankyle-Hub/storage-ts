@@ -75,7 +75,8 @@ Shipped migrations are frozen. The exact SQL of each one is pinned by fixtures i
 ## Programmatic migration — PostgreSQL
 
 ```typescript
-import { Kysely, Migrator, PostgresDialect } from "kysely";
+import { Kysely, PostgresDialect } from "kysely";
+import { Migrator } from "kysely/migration";
 import { Pool } from "pg";
 import { createMigrationProvider } from "@vankyle/storage-kysely";
 import type { StorageDatabase } from "@vankyle/storage-kysely";
@@ -111,7 +112,8 @@ interface MigrationOptions {
 ## Programmatic migration — SQLite
 
 ```typescript
-import { Kysely, Migrator, SqliteDialect } from "kysely";
+import { Kysely, SqliteDialect } from "kysely";
+import { Migrator } from "kysely/migration";
 import Database from "better-sqlite3";
 import { createMigrationProvider } from "@vankyle/storage-kysely";
 import type { StorageDatabase } from "@vankyle/storage-kysely";
@@ -138,7 +140,8 @@ Run migrations inside a Worker (e.g. on a `fetch` with an admin route, or in a D
 
 ```typescript
 // worker.ts
-import { Kysely, Migrator } from "kysely";
+import { Kysely } from "kysely";
+import { Migrator } from "kysely/migration";
 import { D1Dialect } from "@vankyle/storage-cloudflare";
 import { createMigrationProvider } from "@vankyle/storage-kysely";
 import type { StorageDatabase } from "@vankyle/storage-kysely";
@@ -388,9 +391,15 @@ SQLite has no date type; the time columns are `text`. The rules are:
 
 - **Canonical format:** ISO-8601 in UTC with a `Z` suffix and milliseconds — exactly what `Date.prototype.toISOString()` produces, e.g. `2026-01-31T08:00:00.000Z`. Values in this format sort correctly as text.
 - **Reading:** the row mappers accept the canonical format, any ISO-8601 value with an explicit offset, and zone-less values (`2026-01-31 08:00:00`), which are read as **UTC**. (Before 0.5.0 a zone-less value was read in the process's local zone.)
-- **Writing:** SQLite drivers and D1 cannot bind a JavaScript `Date`. `KyselyMetadataStore` passes `Date` values to Kysely, so on SQLite/D1 they must be serialized on the way in — for example with a Kysely plugin that converts `Date` parameters with `toISOString()`. Whatever does the conversion must produce the canonical format above.
+- **Writing:** `KyselyMetadataStore` writes every time value in the canonical format itself. SQLite drivers and D1 cannot bind a JavaScript `Date`, so the stores convert each `Date` with `toISOString()` before it reaches the driver. No plugin or driver configuration is needed.
 
-Because the store cannot write a `Date` on SQLite without such a conversion, there is no legacy data in an ambiguous local-time format to migrate: existing values are either already ISO-8601 with a zone, or were produced by the column default `CURRENT_TIMESTAMP`, which SQLite defines as UTC. That is why `0002` on SQLite needs no source time zone and only normalizes the default's format.
+The store knows it is talking to SQLite from the Kysely dialect: any dialect built on Kysely's `SqliteAdapter` — `SqliteDialect`, `D1Dialect` — is detected automatically. With a custom dialect that is not, pass the type explicitly:
+
+```typescript
+const metadata = new KyselyMetadataStore(db, { databaseType: "sqlite" });
+```
+
+Up to 0.4.x the stores passed `Date` objects straight to the driver, which SQLite rejects, so writes only worked if the application converted them itself. That is also why `0002` on SQLite needs no source time zone: the library cannot have written local-time values there. Existing values are either ISO-8601 text an application wrote, or were produced by the column default `CURRENT_TIMESTAMP`, which SQLite defines as UTC; `0002` only normalizes the latter's format.
 
 ---
 

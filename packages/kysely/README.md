@@ -70,7 +70,7 @@ Six tables are created by the included migrations:
 `@vankyle/storage-kysely` exports `createMigrationProvider(dbType, options?)` for the [Kysely `Migrator`](https://kysely.dev/docs/migrations). `dbType` is `"postgres"` or `"sqlite"` (SQLite and D1):
 
 ```typescript
-import { Migrator } from "kysely";
+import { Migrator } from "kysely/migration";
 import { createMigrationProvider } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({
@@ -135,4 +135,4 @@ Some columns store JSON as text (`metadata`, `providerSessionData`, `providerPar
 
 SQLite has no date type; time columns are `text` and come back as strings. Row mappers convert them to `Date` objects. The canonical stored format is ISO-8601 UTC (`2026-01-31T08:00:00.000Z`); a value without a zone designator, such as the `CURRENT_TIMESTAMP` default's `2026-01-31 08:00:00`, is read as UTC.
 
-SQLite drivers and D1 cannot bind a JavaScript `Date`, so `Date` parameters must be serialized to that format on the way in (for example with a Kysely plugin). See [docs/migrations.md](../../docs/migrations.md#timestamp-storage-on-sqlite-and-d1).
+SQLite drivers and D1 cannot bind a JavaScript `Date`, so the stores write every time value as ISO-8601 UTC text themselves. The database type is detected from the Kysely dialect (`SqliteDialect`, `D1Dialect`); for a custom dialect pass `new KyselyMetadataStore(db, { databaseType: "sqlite" })`. See [docs/migrations.md](../../docs/migrations.md#timestamp-storage-on-sqlite-and-d1).

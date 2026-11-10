@@ -10,32 +10,36 @@ import { BlobStatus } from "@vankyle/storage-core";
 import type { StorageDatabase } from "@/schema/database";
 import { blobRowToModel } from "@/mappers/blob-row.mapper";
 import { blobReferenceRowToModel } from "@/mappers/blob-reference-row.mapper";
+import { StoreDialect, type KyselyStoreOptions } from "@/metadata/store-dialect";
 
 export class KyselyBlobStore implements IBlobStore {
-  constructor(private readonly db: Kysely<StorageDatabase>) {}
+  private readonly dialect: StoreDialect;
+
+  constructor(
+    private readonly db: Kysely<StorageDatabase>,
+    options?: KyselyStoreOptions,
+  ) {
+    this.dialect = new StoreDialect(db, options);
+  }
 
   async createBlob(input: CreateBlobInput): Promise<Blob> {
-    const now = new Date();
-    const row = await this.db
-      .insertInto("blobs")
-      .values({
-        id: input.id,
-        provider: input.provider,
-        bucket: input.bucket,
-        object_key: input.objectKey,
-        size: input.size,
-        mime_type: input.mimeType ?? null,
-        sha256: input.sha256 ?? null,
-        etag: input.etag ?? null,
-        storage_class: input.storageClass ?? null,
-        status: BlobStatus.Active,
-        created_at: now,
-        updated_at: now,
-        deleted_at: null,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const now = this.dialect.timestamp(new Date());
+    const row = await this.dialect.insertRow(this.db, "blobs", {
+      id: input.id,
+      provider: input.provider,
+      bucket: input.bucket,
+      object_key: input.objectKey,
+      size: input.size,
+      mime_type: input.mimeType ?? null,
+      sha256: input.sha256 ?? null,
+      etag: input.etag ?? null,
+      storage_class: input.storageClass ?? null,
+      status: BlobStatus.Active,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    });
 
     return blobRowToModel(row);
   }
@@ -52,18 +56,14 @@ export class KyselyBlobStore implements IBlobStore {
 
   async updateBlob(id: string, input: UpdateBlobInput): Promise<Blob> {
     const updates: Record<string, unknown> = {
-      updated_at: new Date(),
+      updated_at: this.dialect.timestamp(new Date()),
     };
 
     if (input.status !== undefined) updates.status = input.status;
-    if (input.deletedAt !== undefined) updates.deleted_at = input.deletedAt;
+    if (input.deletedAt !== undefined)
+      updates.deleted_at = this.dialect.timestamp(input.deletedAt);
 
-    const row = await this.db
-      .updateTable("blobs")
-      .set(updates)
-      .where("id", "=", id)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const row = await this.dialect.updateRowById(this.db, "blobs", id, updates);
 
     return blobRowToModel(row);
   }
@@ -96,17 +96,13 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async createReference(input: CreateBlobReferenceInput): Promise<BlobReference> {
-    const row = await this.db
-      .insertInto("blob_references")
-      .values({
-        id: input.id,
-        blob_id: input.blobId,
-        ref_type: input.refType,
-        ref_id: input.refId,
-        created_at: new Date(),
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const row = await this.dialect.insertRow(this.db, "blob_references", {
+      id: input.id,
+      blob_id: input.blobId,
+      ref_type: input.refType,
+      ref_id: input.refId,
+      created_at: this.dialect.timestamp(new Date()),
+    });
 
     return blobReferenceRowToModel(row);
   }

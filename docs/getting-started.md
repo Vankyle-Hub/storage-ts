@@ -426,7 +426,7 @@ Migrations are database-type-aware. Pass `'postgres'` or `'sqlite'` to get DDL t
 ### PostgreSQL / SQLite
 
 ```typescript
-import { Migrator } from "kysely";
+import { Migrator } from "kysely/migration";
 import { createMigrationProvider } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({
@@ -452,7 +452,8 @@ provider: createMigrationProvider("postgres", {
 Use `'sqlite'` with the Kysely `Migrator` inside your Worker or a setup script:
 
 ```typescript
-import { Migrator, Kysely } from "kysely";
+import { Kysely } from "kysely";
+import { Migrator } from "kysely/migration";
 import { createMigrationProvider } from "@vankyle/storage-kysely";
 import { D1Dialect } from "@vankyle/storage-cloudflare";
 
