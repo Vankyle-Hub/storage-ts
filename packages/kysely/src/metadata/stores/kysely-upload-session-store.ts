@@ -23,6 +23,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
   }
 
   async createSession(input: CreateUploadSessionInput): Promise<UploadSession> {
+    await this.dialect.ensureReady(this.db);
     const now = this.dialect.timestamp(new Date());
     const row = await this.dialect.insertRow(this.db, "upload_sessions", {
       id: input.id,
@@ -53,6 +54,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
   }
 
   async getSession(id: string): Promise<UploadSession | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("upload_sessions")
       .selectAll()
@@ -66,6 +68,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
     id: string,
     input: UpdateUploadSessionInput,
   ): Promise<UploadSession> {
+    await this.dialect.ensureReady(this.db);
     const updates: Record<string, unknown> = {
       updated_at: this.dialect.timestamp(new Date()),
     };
@@ -91,6 +94,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
   }
 
   async addPart(input: CreateUploadedPartInput): Promise<UploadedPart> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.dialect.insertRow(this.db, "uploaded_parts", {
       id: input.id,
       session_id: input.sessionId,
@@ -112,6 +116,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
     sessionId: string,
     partNumber: number,
   ): Promise<UploadedPart | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("uploaded_parts")
       .selectAll()
@@ -123,6 +128,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
   }
 
   async listParts(sessionId: string): Promise<UploadedPart[]> {
+    await this.dialect.ensureReady(this.db);
     const rows = await this.db
       .selectFrom("uploaded_parts")
       .selectAll()

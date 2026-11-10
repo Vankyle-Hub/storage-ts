@@ -9,6 +9,7 @@ The `@vankyle/storage-kysely` package ships migration factories that produce dat
   - [Unsupported databases](#unsupported-databases)
 - [Migration list](#migration-list)
 - [Programmatic migration — PostgreSQL](#programmatic-migration--postgresql)
+- [Programmatic migration — MySQL](#programmatic-migration--mysql)
 - [Programmatic migration — SQLite](#programmatic-migration--sqlite)
 - [Programmatic migration — Cloudflare D1](#programmatic-migration--cloudflare-d1)
 - [Generating SQL scripts](#generating-sql-scripts)
@@ -19,6 +20,7 @@ The `@vankyle/storage-kysely` package ships migration factories that produce dat
   - [Verifying the conversion](#verifying-the-conversion)
   - [Rolling back](#rolling-back)
 - [Timestamp storage on SQLite and D1](#timestamp-storage-on-sqlite-and-d1)
+- [MySQL schema and time handling](#mysql-schema-and-time-handling)
 - [Adding future migrations](#adding-future-migrations)
 
 ---
@@ -40,24 +42,20 @@ Using `'sqlite'` produces `text` for all string/timestamp columns and `integer` 
 ## DatabaseType
 
 ```typescript
-type DatabaseType = "postgres" | "sqlite";
+type DatabaseType = "postgres" | "mysql" | "sqlite";
 ```
 
 | Value | Use for |
 |---|---|
 | `"postgres"` | PostgreSQL |
+| `"mysql"` | MySQL 5.6.4+, 5.7, 8.x |
 | `"sqlite"` | SQLite, Cloudflare D1 |
 
 ### Unsupported databases
 
-**MySQL and SQL Server are not supported.** Up to 0.4.x the documentation listed them under `"postgres"`. That was never accurate, and from 0.5.0 they are explicitly out of scope until each gets a schema and a store implementation designed for it:
+**SQL Server is not supported.** `timestamp` is a row-version type there, and a table may have only one such column, so the shared schema cannot be applied. Supporting it needs a schema and query path of its own, as was done for MySQL.
 
-| Database | Why the current schema and stores do not work |
-|---|---|
-| MySQL | `0001_init` fails on MySQL 8 with the default `utf8mb4` character set when creating the unique index `idx_blobs_locator` (`Specified key was too long; max key length is 3072 bytes`). `KyselyMetadataStore` uses `RETURNING` on every insert and update, which MySQL rejects. MySQL also has no `timestamptz`, so `0002_timestamptz` has no equivalent. |
-| SQL Server | `timestamp` is a row-version type, and a table may have only one such column, so `0001_init` cannot be applied. |
-
-Do not pass `"postgres"` for these databases. Supporting them is tracked as separate work; it needs its own column types, index design and query path, not a variation of the PostgreSQL migration.
+**MySQL: use `"mysql"`, never `"postgres"`.** Up to 0.4.x the documentation listed MySQL under `"postgres"`. That never worked: the PostgreSQL-style `0001_init` fails on MySQL (`Specified key was too long` on `idx_blobs_locator`), and the stores used `RETURNING`, which MySQL rejects. From 0.5.0 MySQL has its own database type with its own schema — see [MySQL schema and time handling](#mysql-schema-and-time-handling).
 
 ---
 
@@ -106,6 +104,39 @@ interface MigrationOptions {
   timestampSourceTimeZone?: string;
 }
 ```
+
+---
+
+## Programmatic migration — MySQL
+
+```typescript
+import { Kysely, MysqlDialect } from "kysely";
+import { Migrator } from "kysely/migration";
+import { createPool } from "mysql2";
+import { createMigrationProvider, KyselyMetadataStore } from "@vankyle/storage-kysely";
+import type { StorageDatabase } from "@vankyle/storage-kysely";
+
+const db = new Kysely<StorageDatabase>({
+  dialect: new MysqlDialect({
+    pool: createPool({
+      uri: process.env.DATABASE_URL,
+      timezone: "Z", // required — see below
+    }),
+  }),
+});
+
+const migrator = new Migrator({
+  db,
+  provider: createMigrationProvider("mysql"),
+});
+
+const { error } = await migrator.migrateToLatest();
+if (error) throw error;
+
+const metadata = new KyselyMetadataStore(db); // detects MySQL from the dialect
+```
+
+**`timezone: "Z"` is required** (or `dateStrings: true`). The time columns hold UTC without a zone, and `mysql2` by default builds `Date` objects in the local time zone of the process. The stores check this on first use and throw `MetadataError` if the connection would return shifted values, rather than letting them through. Details: [MySQL schema and time handling](#mysql-schema-and-time-handling).
 
 ---
 
@@ -217,7 +248,7 @@ const timestamptz = await generateMigrationSql("0002_timestamptz", "postgres", {
 });
 ```
 
-An unknown key throws `ValidationError` (`field: "migrationKey"`).
+An unknown key throws `ValidationError` (`field: "migrationKey"`). A migration that runs no statement for a database type (`0002_timestamptz` on MySQL) returns a one-line SQL comment rather than an empty string.
 
 ### Example output — `0001_init.sql`
 
@@ -263,6 +294,7 @@ alter table "blobs"
 | Database type | Schema change | Data change |
 |---|---|---|
 | `postgres` | `timestamp` → `timestamptz` on all 14 columns, one `ALTER TABLE` per table. `DEFAULT CURRENT_TIMESTAMP` is preserved. | Each value is reinterpreted with `AT TIME ZONE <timestampSourceTimeZone>` (default `'UTC'`). |
+| `mysql` | None. | None. MySQL support starts in 0.5.0 and its `0001_init` already creates UTC `DATETIME(3)` columns, so there is nothing to convert. The migration is recorded as applied but runs no statement. |
 | `sqlite` (incl. D1) | None. Columns stay `text`. | Values in SQLite's `CURRENT_TIMESTAMP` format (`2026-01-31 08:00:00`, which is UTC by definition) are rewritten to ISO-8601 UTC (`2026-01-31T08:00:00.000Z`). Values that already carry a zone are left untouched. |
 
 On PostgreSQL the `ALTER TABLE` rewrites each table and holds an `ACCESS EXCLUSIVE` lock on it for the duration. Run it in a maintenance window if the tables are large.
@@ -381,7 +413,7 @@ UPDATE blobs SET created_at = (created_at AT TIME ZONE 'UTC') AT TIME ZONE 'Asia
 
 ### Rolling back
 
-`migrator.migrateDown()` reverts `0002` on PostgreSQL by converting the columns back to `timestamp` with the same `AT TIME ZONE` — pass the **same** `timestampSourceTimeZone` you used for `up`, and the original wall-clock values are restored exactly. On SQLite `down` does nothing (the ISO-8601 form is understood by every release).
+`migrator.migrateDown()` reverts `0002` on PostgreSQL by converting the columns back to `timestamp` with the same `AT TIME ZONE` — pass the **same** `timestampSourceTimeZone` you used for `up`, and the original wall-clock values are restored exactly. On MySQL and SQLite `down` does nothing.
 
 ---
 
@@ -403,14 +435,40 @@ Up to 0.4.x the stores passed `Date` objects straight to the driver, which SQLit
 
 ---
 
+## MySQL schema and time handling
+
+MySQL (5.6.4+, 5.7, 8.x) has a schema of its own, written out in `0001_init.mysql.ts`. It models the same six tables, with these deliberate differences from PostgreSQL:
+
+| Aspect | MySQL | Why |
+|---|---|---|
+| Character set / collation | `utf8mb4` / `utf8mb4_bin` on every table | Object keys, ids and status values are case-sensitive on every other database; MySQL's default collations are not. |
+| Time columns | `DATETIME(3)` holding UTC; no column default | `TIMESTAMP` converts through the session time zone and ends in 2038. `DEFAULT CURRENT_TIMESTAMP` would use the session zone, so the stores always supply the value. |
+| Unique blob location | `blobs.locator_hash` — SHA-256 (hex) of `(provider, bucket, object_key)`, computed by the store — with the unique index `idx_blobs_locator` on it | An index over the three columns needs up to 5244 bytes with `utf8mb4`; InnoDB allows 3072 (767 per column on 5.6). The hash is 64 bytes. It also avoids `PAD SPACE` comparison, under which `'key'` equals `'key '`. |
+| `idx_files_owner` | Prefix index on `owner_id(191)` | Fits MySQL 5.6's 767-byte per-column limit. Non-unique, so the prefix only affects selectivity. |
+| JSON payload columns | `MEDIUMTEXT` | `TEXT` would cap them at 64 KB. |
+| Reading back a written row | `INSERT` / `UPDATE`, then `SELECT` by primary key | MySQL has no `RETURNING`. Ids are generated by the caller, so the row can always be found. |
+
+**How time is kept in UTC.** MySQL has no time-zone-aware column type that is safe to use here, so the guarantee is made in the application layer, the same way as on SQLite:
+
+- *Writing:* the stores format every `Date` as a UTC literal (`2026-01-31 08:00:00.123`) themselves. Nothing is left to the driver, the session `time_zone`, or the server's zone.
+- *Reading:* `DATETIME` carries no zone, so the driver decides how to turn it into a `Date`. `mysql2` must be told the values are UTC with `timezone: "Z"`, or return text with `dateStrings: true` (the mappers read zone-less text as UTC). The stores run one probe query on first use and throw `MetadataError` if neither is the case.
+
+There is no separate time-zone column. These columns are system instants (created, updated, expired, completed); there is no original local time to preserve, and PostgreSQL's `timestamptz` does not keep one either.
+
+If you insert rows into the `blobs` table yourself, you must also fill `locator_hash`: lowercase hex SHA-256 of `JSON.stringify([provider, bucket, objectKey])`.
+
+Verified against MySQL 5.6.51, 5.7.44 and 8.4.13 with `mysql2`. On MySQL 5.6 the database's default character set also applies to Kysely's own `kysely_migration` tables.
+
+---
+
 ## Adding future migrations
 
 Each new migration is a factory function that follows the same pattern as the existing ones. Rules:
 
-- **Never edit a shipped migration.** Add a new one. The SQL fixtures in `__fixtures__/` fail the test suite if a shipped migration changes.
+- **Never edit a shipped migration.** This includes the MySQL `0001_init`, frozen from 0.5.0. Add a new one. The SQL fixtures in `__fixtures__/` fail the test suite if a shipped migration changes.
 - **Number sequentially.** The next free number is `0003`.
-- **Create new time columns time-zone-aware from the start:** `timestamptz` on PostgreSQL, `text` (ISO-8601 UTC) on SQLite. Do not add them to `TIMESTAMP_COLUMNS_0001`; that list is frozen with `0001`.
-- **Handle both database types**, and update the Cosmos mapper when the domain model changes.
+- **Create new time columns time-zone-aware from the start:** `timestamptz` on PostgreSQL, `datetime(3)` (UTC, no default) on MySQL, `text` (ISO-8601 UTC) on SQLite. Do not add them to `TIMESTAMP_COLUMNS_0001`; that list is frozen with `0001`.
+- **Handle all three database types** — every type has the same migration keys, even when one of them runs no statement — and update the Cosmos mapper when the domain model changes.
 - **Add SQL fixtures** for the new migration (one per database type).
 
 ```typescript

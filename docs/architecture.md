@@ -92,15 +92,17 @@ Adapters for the Cloudflare Workers runtime:
 
 `IMetadataStore` implementation powered by [Kysely](https://kysely.dev/):
 
-- Works with PostgreSQL, SQLite, and Cloudflare D1 (via `D1Dialect`). MySQL and SQL Server are not supported — see [migrations.md](migrations.md#unsupported-databases)
+- Works with PostgreSQL, MySQL, SQLite, and Cloudflare D1 (via `D1Dialect`). SQL Server is not supported — see [migrations.md](migrations.md#unsupported-databases)
+- The stores adapt to the database through a small dialect layer (`StoreDialect`): how a time value is bound, and how a written row is read back (`RETURNING`, or a select by id on MySQL). The database type is detected from the Kysely dialect and can be set with `new KyselyMetadataStore(db, { databaseType })`
 - Contains table schema types (`StorageDatabase`), row mappers, and Kysely query implementations for all six stores
 - Provides database-type-aware migration factories via `createMigrations(dbType, options?)` and `createMigrationProvider(dbType, options?)`
   - `'postgres'` — `varchar(n)`, `bigint`; time columns are `timestamptz` (after `0002_timestamptz`)
+  - `'mysql'` — its own schema: `utf8mb4_bin`, UTC `datetime(3)` time columns, locator uniqueness through a hash column
   - `'sqlite'` — `text`, `integer` for SQLite and Cloudflare D1; time columns are ISO-8601 UTC text
 - Provides `generateMigrationSql(key, dbType, options?)` / `generateAllMigrationSql(dbType, options?)` to emit plain SQL strings (useful for generating `wrangler d1 migrations apply` scripts at build time)
 - Shipped migrations are frozen; their SQL is pinned by fixtures and checked in tests
 
-Time values are instants everywhere: the domain models use `Date`, and every metadata backend stores them in a time-zone-unambiguous form (`timestamptz`, ISO-8601 UTC text, Cosmos ISO strings). No stored value depends on the time zone of the process that wrote it.
+Time values are instants everywhere: the domain models use `Date`, and every metadata backend stores them in a time-zone-unambiguous form (`timestamptz`, UTC `datetime(3)` on MySQL, ISO-8601 UTC text, Cosmos ISO strings). No stored value depends on the time zone of the process that wrote it.
 
 ---
 
@@ -425,8 +427,8 @@ Use `cloudflare` only when you are running inside a Cloudflare Worker and have a
 
 | Scenario | Package |
 |---|---|
-| PostgreSQL, SQLite | `kysely` |
-| MySQL, SQL Server | Not supported ([details](migrations.md#unsupported-databases)) |
+| PostgreSQL, MySQL, SQLite | `kysely` |
+| SQL Server | Not supported ([details](migrations.md#unsupported-databases)) |
 | Cloudflare D1 | `kysely` + `D1Dialect` from `cloudflare` |
 | Azure Cosmos DB | `azure` |
 
