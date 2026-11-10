@@ -101,6 +101,17 @@ function setup(session: UploadSession) {
       listVersions: vi.fn().mockResolvedValue([]),
       getLatestVersion: vi.fn(),
     },
+    tags: {
+      createTag: vi.fn(),
+      getTag: vi.fn(),
+      getTagByName: vi.fn(),
+      listTags: vi.fn().mockResolvedValue([]),
+      deleteTag: vi.fn(),
+      addTagToFile: vi.fn(),
+      removeTagFromFile: vi.fn(),
+      listTagsForFile: vi.fn().mockResolvedValue([]),
+      listFilesByTag: vi.fn().mockResolvedValue([]),
+    },
   } satisfies IMetadataStore;
 
   const service = new DefaultStorageService({
