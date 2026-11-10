@@ -88,8 +88,12 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
   }
 
   async addPart(input: CreateUploadedPartInput): Promise<UploadedPart> {
+    // Cosmos has no unique index to lean on here, so the document id itself
+    // identifies the part: registering the same part number again upserts
+    // the same document and replaces the earlier registration atomically.
+    // The caller's input.id is not used.
     const doc: UploadedPartDoc = {
-      id: input.id,
+      id: partDocumentId(input.sessionId, input.partNumber),
       pk: input.sessionId,
       type: "uploaded-part",
       sessionId: input.sessionId,
@@ -102,8 +106,8 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
       uploadedAt: new Date().toISOString(),
     };
 
-    const { resource } = await this.container.items.create(doc);
-    return uploadedPartDocToModel(resource as UploadedPartDoc);
+    const { resource } = await this.container.items.upsert(doc);
+    return uploadedPartDocToModel(resource as unknown as UploadedPartDoc);
   }
 
   async getPart(
@@ -121,8 +125,8 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
 
     // uploaded-part pk = sessionId — single-partition query
     const { resources } = await this.container.items.query<UploadedPartDoc>(query, { partitionKey: sessionId }).fetchAll();
-    if (resources.length === 0) return undefined;
-    return uploadedPartDocToModel(resources[0]!);
+    const [current] = latestPerPartNumber(resources);
+    return current ? uploadedPartDocToModel(current) : undefined;
   }
 
   async listParts(sessionId: string): Promise<UploadedPart[]> {
@@ -134,6 +138,32 @@ export class CosmosUploadSessionStore implements IUploadSessionStore {
 
     // uploaded-part pk = sessionId — single-partition query
     const { resources } = await this.container.items.query<UploadedPartDoc>(query, { partitionKey: sessionId }).fetchAll();
-    return resources.map(uploadedPartDocToModel);
+    return latestPerPartNumber(resources).map(uploadedPartDocToModel);
   }
+}
+
+/** Document id of a part: one document per (session, part number). */
+function partDocumentId(sessionId: string, partNumber: number): string {
+  return `${sessionId}:${partNumber}`;
+}
+
+/**
+ * One document per part number — the most recently uploaded — in ascending
+ * part number order.
+ *
+ * Parts written by this store have a deterministic id and cannot repeat.
+ * Versions up to 0.5.0 gave every registration a random id, so a session
+ * that was in flight across the upgrade may still hold several documents
+ * for one part number; only the latest registration counts.
+ */
+function latestPerPartNumber(docs: readonly UploadedPartDoc[]): UploadedPartDoc[] {
+  const latest = new Map<number, UploadedPartDoc>();
+  for (const doc of docs) {
+    const seen = latest.get(doc.partNumber);
+    // uploadedAt is ISO-8601 UTC text, which compares chronologically.
+    if (!seen || doc.uploadedAt >= seen.uploadedAt) {
+      latest.set(doc.partNumber, doc);
+    }
+  }
+  return [...latest.values()].sort((a, b) => a.partNumber - b.partNumber);
 }

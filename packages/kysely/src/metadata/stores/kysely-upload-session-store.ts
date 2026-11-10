@@ -95,10 +95,9 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
 
   async addPart(input: CreateUploadedPartInput): Promise<UploadedPart> {
     await this.dialect.ensureReady(this.db);
-    const row = await this.dialect.insertRow(this.db, "uploaded_parts", {
-      id: input.id,
-      session_id: input.sessionId,
-      part_number: input.partNumber,
+    // Everything a re-registration overwrites. The row keeps its id and its
+    // (session_id, part_number) key.
+    const replaceable = {
       size: input.size,
       etag: input.etag ?? null,
       checksum_sha256: input.checksumSha256 ?? null,
@@ -107,8 +106,36 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
         ? JSON.stringify(input.providerPartData)
         : null,
       uploaded_at: this.dialect.timestamp(new Date()),
+    };
+    const insert = this.db.insertInto("uploaded_parts").values({
+      id: input.id,
+      session_id: input.sessionId,
+      part_number: input.partNumber,
+      ...replaceable,
     });
 
+    // A client that re-uploads a failed part registers the same part number
+    // again; the unique index (session_id, part_number) turns that into an
+    // update instead of an error.
+    if (this.dialect.databaseType === "mysql") {
+      await insert.onDuplicateKeyUpdate(replaceable).execute();
+      // No RETURNING on MySQL, and after a replacement the row still has its
+      // first id, so read it back by its key rather than by input.id.
+      const row = await this.db
+        .selectFrom("uploaded_parts")
+        .selectAll()
+        .where("session_id", "=", input.sessionId)
+        .where("part_number", "=", input.partNumber)
+        .executeTakeFirstOrThrow();
+      return uploadedPartRowToModel(row);
+    }
+
+    const row = await insert
+      .onConflict((oc) =>
+        oc.columns(["session_id", "part_number"]).doUpdateSet(replaceable),
+      )
+      .returningAll()
+      .executeTakeFirstOrThrow();
     return uploadedPartRowToModel(row);
   }
 

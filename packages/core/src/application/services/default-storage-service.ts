@@ -2,6 +2,8 @@ import {
   CapabilityNotSupportedError,
   MetadataNotFoundError,
   UploadEtagMismatchError,
+  UploadSessionExpiredError,
+  UploadSessionStateError,
   UploadSizeMismatchError,
 } from "@vankyle/storage-shared";
 import type { IStorage } from "@/ports/storage/i-storage";
@@ -139,6 +141,7 @@ export class DefaultStorageService implements IStorageService {
     }
 
     this.assertMultipart(session, "getUploadPartUrl");
+    this.assertWritable(session, "getUploadPartUrl");
 
     if (!session.providerUploadId) {
       throw new MetadataNotFoundError("UploadSession", session.id);
@@ -149,7 +152,7 @@ export class DefaultStorageService implements IStorageService {
       objectKey: session.objectKey,
       providerUploadId: session.providerUploadId,
       partNumber: request.partNumber,
-      expiresInSeconds: this.defaultUploadExpiresInSeconds,
+      expiresInSeconds: this.partUrlLifetimeSeconds(session),
     });
   }
 
@@ -157,6 +160,7 @@ export class DefaultStorageService implements IStorageService {
     const session = await this.requireSession(request.sessionId);
 
     this.assertMultipart(session, "uploadPart");
+    this.assertWritable(session, "uploadPart");
 
     if (!session.providerUploadId) {
       throw new MetadataNotFoundError("UploadSession", session.id);
@@ -200,15 +204,7 @@ export class DefaultStorageService implements IStorageService {
 
     // Writing into a finished session would silently replace the object
     // behind an existing blob record, or resurrect an aborted upload.
-    if (
-      session.status === UploadSessionStatus.Completed ||
-      session.status === UploadSessionStatus.Aborted
-    ) {
-      throw new ValidationError(
-        `Upload session ${session.id} is ${session.status}; it no longer accepts data`,
-        "status",
-      );
-    }
+    this.assertWritable(session, "uploadObject");
 
     // Length: explicit value, else the byte length of an in-memory body,
     // else the size declared at session creation (streams have no length).
@@ -240,6 +236,7 @@ export class DefaultStorageService implements IStorageService {
 
   async registerPart(request: RegisterPartRequest): Promise<UploadedPart> {
     const session = await this.requireSession(request.sessionId);
+    this.assertWritable(session, "registerPart");
 
     if (session.status === UploadSessionStatus.Pending) {
       await this.metadata.uploads.updateSession(session.id, {
@@ -247,6 +244,8 @@ export class DefaultStorageService implements IStorageService {
       });
     }
 
+    // addPart replaces an earlier registration of the same part number, so
+    // a client that re-uploads a failed part can simply register it again.
     return this.metadata.uploads.addPart({
       id: generateId(),
       sessionId: session.id,
@@ -261,6 +260,11 @@ export class DefaultStorageService implements IStorageService {
     request: CompleteUploadSessionRequest,
   ): Promise<CompleteUploadSessionResponse> {
     const session = await this.requireSession(request.sessionId);
+
+    // A completed session already has its blob: completing it again would
+    // only collide with that blob's unique locator. Aborted and expired
+    // sessions must not produce a blob at all.
+    this.assertWritable(session, "completeUploadSession");
 
     let etag: string | undefined;
 
@@ -360,6 +364,22 @@ export class DefaultStorageService implements IStorageService {
 
   async abortUploadSession(sessionId: string): Promise<void> {
     const session = await this.requireSession(sessionId);
+
+    // The blob of a completed session exists; relabelling the session as
+    // aborted would contradict it.
+    if (session.status === UploadSessionStatus.Completed) {
+      throw new UploadSessionStateError(
+        session.id,
+        session.status,
+        "abortUploadSession",
+      );
+    }
+    // Aborting twice is harmless: nothing is left to abort. An expired
+    // session, on the other hand, is aborted normally — that is how it is
+    // cleaned up.
+    if (session.status === UploadSessionStatus.Aborted) {
+      return;
+    }
 
     if (session.providerUploadId) {
       await this.storage.abortUploadSession({
@@ -464,6 +484,42 @@ export class DefaultStorageService implements IStorageService {
         "mode",
       );
     }
+  }
+
+  /**
+   * Guards every operation that writes to a session or finalises it.
+   *
+   * A completed or aborted session is refused with UploadSessionStateError;
+   * an open session whose expiresAt has passed with UploadSessionExpiredError.
+   * Status is checked first, so a finished session reports its state even if
+   * it has also expired. Sessions without expiresAt never expire. Expiry is
+   * evaluated here, at call time; it is not a stored status.
+   */
+  private assertWritable(session: UploadSession, operation: string): void {
+    if (
+      session.status === UploadSessionStatus.Completed ||
+      session.status === UploadSessionStatus.Aborted
+    ) {
+      throw new UploadSessionStateError(session.id, session.status, operation);
+    }
+    if (session.expiresAt && session.expiresAt.getTime() <= Date.now()) {
+      throw new UploadSessionExpiredError(session.id, session.expiresAt);
+    }
+  }
+
+  /**
+   * Lifetime of a presigned part URL: the configured default, but never
+   * longer than the session itself has left (whole seconds, at least 1), so
+   * a URL cannot be used after its session expired.
+   */
+  private partUrlLifetimeSeconds(session: UploadSession): number {
+    if (!session.expiresAt) {
+      return this.defaultUploadExpiresInSeconds;
+    }
+    const remaining = Math.floor(
+      (session.expiresAt.getTime() - Date.now()) / 1000,
+    );
+    return Math.max(1, Math.min(this.defaultUploadExpiresInSeconds, remaining));
   }
 
   private async requireSession(sessionId: string) {

@@ -1,6 +1,58 @@
 import { BaseError } from "@/errors/base-error";
 
 /**
+ * The upload session is finished — completed or aborted — and no longer
+ * accepts the operation.
+ *
+ * Thrown before any provider call or metadata write, so nothing changed.
+ */
+export class UploadSessionStateError extends BaseError {
+  readonly sessionId: string;
+  /** The session's current status, e.g. `"completed"` or `"aborted"`. */
+  readonly status: string;
+  /** The service operation that was refused, e.g. `"registerPart"`. */
+  readonly operation: string;
+
+  constructor(
+    sessionId: string,
+    status: string,
+    operation: string,
+    options?: { cause?: unknown },
+  ) {
+    super(
+      "UPLOAD_SESSION_INVALID_STATE",
+      `Upload session ${sessionId} is ${status}; ${operation} is no longer allowed`,
+      options,
+    );
+    this.sessionId = sessionId;
+    this.status = status;
+    this.operation = operation;
+  }
+}
+
+/**
+ * The upload session's `expiresAt` has passed. It accepts no more data and
+ * cannot be completed; it can still be aborted.
+ *
+ * Thrown before any provider call or metadata write, so nothing changed.
+ */
+export class UploadSessionExpiredError extends BaseError {
+  readonly sessionId: string;
+  /** The instant the session expired. */
+  readonly expiresAt: Date;
+
+  constructor(sessionId: string, expiresAt: Date, options?: { cause?: unknown }) {
+    super(
+      "UPLOAD_SESSION_EXPIRED",
+      `Upload session ${sessionId} expired at ${expiresAt.toISOString()}`,
+      options,
+    );
+    this.sessionId = sessionId;
+    this.expiresAt = expiresAt;
+  }
+}
+
+/**
  * The stored object's size differs from the size declared when the upload
  * session was created (`expectedSize`).
  *

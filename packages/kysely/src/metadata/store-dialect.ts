@@ -169,7 +169,38 @@ export function detectDatabaseType(db: Kysely<StorageDatabase>): DatabaseType {
   return "postgres";
 }
 
-const MYSQL_PROBE = "2000-01-01 00:00:00.000";
+/**
+ * Whether a driver error reports a violated unique constraint or index.
+ *
+ * Drivers have no common shape for this: `pg` sets SQLSTATE `23505` in
+ * `code`; `mysql2` sets `errno` 1062 / `code` `ER_DUP_ENTRY`; SQLite drivers
+ * set `code` `SQLITE_CONSTRAINT_UNIQUE` (or `_PRIMARYKEY`), `node:sqlite`
+ * sets `errcode` 2067 / 1555, and Cloudflare D1 only gives the engine's
+ * message, `UNIQUE constraint failed: ...`.
+ */
+export function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code, errno, errcode, message } = error as {
+    code?: unknown;
+    errno?: unknown;
+    errcode?: unknown;
+    message?: unknown;
+  };
+  if (code === "23505" || code === "ER_DUP_ENTRY" || errno === 1062) {
+    return true;
+  }
+  if (code === "SQLITE_CONSTRAINT_UNIQUE" || code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
+    return true;
+  }
+  if (errcode === 2067 || errcode === 1555) {
+    return true;
+  }
+  return typeof message === "string" && message.includes("UNIQUE constraint failed");
+}
+
+const MYSQL_PROBE ="2000-01-01 00:00:00.000";
 const MYSQL_PROBE_UTC_MS = Date.UTC(2000, 0, 1);
 
 async function assertMysqlReturnsUtc(db: Kysely<StorageDatabase>): Promise<void> {

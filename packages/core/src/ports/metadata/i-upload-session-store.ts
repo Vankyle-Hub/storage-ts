@@ -46,7 +46,19 @@ export interface IUploadSessionStore {
   getSession(id: string): Promise<UploadSession | undefined>;
   updateSession(id: string, input: UpdateUploadSessionInput): Promise<UploadSession>;
 
+  /**
+   * Records an uploaded part. If the session already has a part with the
+   * same `partNumber`, the new registration replaces it: `size`, `etag`,
+   * `checksumSha256`, `providerPartId`, `providerPartData` and `uploadedAt`
+   * are overwritten (an omitted optional value clears the old one). Clients
+   * re-upload and re-register a failed part routinely, so this must not fail.
+   *
+   * Returns the part as stored. On replacement its `id` is the store's and
+   * need not equal `input.id`.
+   */
   addPart(input: CreateUploadedPartInput): Promise<UploadedPart>;
+  /** The current registration of a part, if any. */
   getPart(sessionId: string, partNumber: number): Promise<UploadedPart | undefined>;
+  /** At most one part per `partNumber`, in ascending `partNumber` order. */
   listParts(sessionId: string): Promise<UploadedPart[]>;
 }

@@ -115,6 +115,20 @@ export interface DeleteFileRequest {
   readonly fileId: string;
 }
 
+/**
+ * Session lifecycle rules shared by every operation that writes to an upload
+ * session (`getUploadPartUrl`, `uploadPart`, `uploadObject`, `registerPart`,
+ * `completeUploadSession`):
+ *
+ * - a `completed` or `aborted` session is refused with
+ *   `UploadSessionStateError`;
+ * - an open session whose `expiresAt` has passed is refused with
+ *   `UploadSessionExpiredError` (a session without `expiresAt` never
+ *   expires).
+ *
+ * Checks run in the order: session exists → capability → mode → status →
+ * expiry, and always before any provider call or metadata write.
+ */
 export interface IStorageService {
   /**
    * Starts an upload session.
@@ -126,13 +140,26 @@ export interface IStorageService {
 
   getUploadSession(sessionId: string): Promise<UploadSession | undefined>;
 
+  /**
+   * Returns a presigned URL for uploading one part of a `multipart` session.
+   * The URL is valid for the configured default lifetime, but never longer
+   * than the session itself has left.
+   *
+   * @throws CapabilityNotSupportedError when the provider cannot sign part URLs.
+   * @throws ValidationError (`field: "mode"`) when the session is in `single` mode.
+   * @throws UploadSessionStateError when the session is completed or aborted.
+   * @throws UploadSessionExpiredError when the session has expired.
+   */
   getUploadPartUrl(request: GetUploadPartUrlRequest): Promise<SignedAccess>;
 
   /**
-   * Uploads one part of a `multipart` session through the server.
+   * Uploads one part of a `multipart` session through the server. Uploading
+   * a part number again replaces the earlier part.
    *
    * @throws ValidationError (`field: "mode"`) when the session is in
    *   `single` mode — use {@link IStorageService.uploadObject} instead.
+   * @throws UploadSessionStateError when the session is completed or aborted.
+   * @throws UploadSessionExpiredError when the session has expired.
    */
   uploadPart(request: UploadPartRequest): Promise<UploadedPart>;
 
@@ -146,26 +173,48 @@ export interface IStorageService {
    * @throws MetadataNotFoundError when the session does not exist.
    * @throws ValidationError (`field: "mode"`) when the session is in
    *   `multipart` mode — use `uploadPart` instead.
-   * @throws ValidationError (`field: "status"`) when the session is already
-   *   completed or aborted.
+   * @throws UploadSessionStateError when the session is already completed
+   *   or aborted.
+   * @throws UploadSessionExpiredError when the session has expired.
    */
   uploadObject(request: UploadObjectRequest): Promise<UploadObjectResponse>;
 
+  /**
+   * Records a part that the client uploaded directly to the provider.
+   * Registering a part number again replaces the earlier registration, so a
+   * client that re-uploads a failed part simply registers it once more.
+   *
+   * @throws MetadataNotFoundError when the session does not exist.
+   * @throws UploadSessionStateError when the session is completed or aborted.
+   * @throws UploadSessionExpiredError when the session has expired.
+   */
   registerPart(request: RegisterPartRequest): Promise<UploadedPart>;
 
   /**
    * Finalises the upload, verifies the stored object, and creates the blob
    * (and optionally file) records.
    *
+   * @throws UploadSessionStateError when the session is already completed
+   *   or aborted. A session can be completed once.
+   * @throws UploadSessionExpiredError when the session has expired.
    * @throws UploadSizeMismatchError when the session declared `expectedSize`
    *   and the stored object has a different size.
    * @throws UploadEtagMismatchError when `request.etag` is given and differs
    *   from the stored object's ETag (compared verbatim).
    *
-   * Both are raised before any metadata is written; the session stays open.
+   * The two mismatch errors are raised before any metadata is written; the
+   * session stays open.
    */
   completeUploadSession(request: CompleteUploadSessionRequest): Promise<CompleteUploadSessionResponse>;
 
+  /**
+   * Aborts an open session (expired ones included) and the provider upload
+   * behind it. Aborting an already aborted session does nothing.
+   *
+   * @throws MetadataNotFoundError when the session does not exist.
+   * @throws UploadSessionStateError when the session is completed — its blob
+   *   exists and the session is not relabelled.
+   */
   abortUploadSession(sessionId: string): Promise<void>;
 
   getReadUrl(request: GetReadUrlRequest): Promise<SignedAccess>;

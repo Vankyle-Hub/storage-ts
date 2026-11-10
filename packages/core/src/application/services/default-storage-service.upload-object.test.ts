@@ -12,6 +12,7 @@ import type {
 } from "@vankyle/storage-core";
 import {
   MetadataNotFoundError,
+  UploadSessionStateError,
   ValidationError,
 } from "@vankyle/storage-shared";
 
@@ -214,7 +215,7 @@ describe("DefaultStorageService.uploadObject", () => {
   });
 
   it.each([UploadSessionStatus.Completed, UploadSessionStatus.Aborted])(
-    "rejects a %s session with a ValidationError on status",
+    "rejects a %s session with an UploadSessionStateError",
     async (status) => {
       const { service, storage } = setup(makeSession({ status }));
 
@@ -222,8 +223,10 @@ describe("DefaultStorageService.uploadObject", () => {
         .uploadObject({ sessionId: "session-1", body: new Uint8Array() })
         .catch((e: unknown) => e);
 
-      expect(error).toBeInstanceOf(ValidationError);
-      expect((error as ValidationError).field).toBe("status");
+      // Contract changed with #61: every session write path reports a
+      // finished session with the same typed error (was ValidationError).
+      expect(error).toBeInstanceOf(UploadSessionStateError);
+      expect((error as UploadSessionStateError).status).toBe(status);
       expect(storage.putObject).not.toHaveBeenCalled();
     },
   );
