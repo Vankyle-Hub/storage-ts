@@ -1,13 +1,14 @@
 # @vankyle/storage-kysely
 
-`IMetadataStore` implementation backed by [Kysely](https://kysely.dev/) for PostgreSQL, SQLite and Cloudflare D1.
+`IMetadataStore` implementation backed by [Kysely](https://kysely.dev/) for PostgreSQL, MySQL, SQLite and Cloudflare D1.
 
 ## Supported databases
 
 - PostgreSQL
+- MySQL 5.6.4+, 5.7, 8.x — create the `mysql2` pool with `timezone: "Z"`; see [docs/migrations.md](../../docs/migrations.md#mysql-schema-and-time-handling)
 - SQLite
 
-MySQL and SQL Server are **not supported**: the schema and the stores do not work there. See [docs/migrations.md](../../docs/migrations.md#unsupported-databases).
+SQL Server is **not supported**. See [docs/migrations.md](../../docs/migrations.md#unsupported-databases).
 - Cloudflare D1 (via `D1Dialect` from `@vankyle/storage-cloudflare`)
 
 ## Installation
@@ -16,7 +17,7 @@ MySQL and SQL Server are **not supported**: the schema and the stores do not wor
 pnpm add @vankyle/storage-kysely kysely @vankyle/storage-core @vankyle/storage-shared
 ```
 
-Add your database driver (e.g. `pg`, `better-sqlite3`) as needed.
+Add your database driver (e.g. `pg`, `mysql2`, `better-sqlite3`) as needed.
 
 ## Usage
 
@@ -67,7 +68,7 @@ Six tables are created by the included migrations:
 
 ## Running migrations
 
-`@vankyle/storage-kysely` exports `createMigrationProvider(dbType, options?)` for the [Kysely `Migrator`](https://kysely.dev/docs/migrations). `dbType` is `"postgres"` or `"sqlite"` (SQLite and D1):
+`@vankyle/storage-kysely` exports `createMigrationProvider(dbType, options?)` for the [Kysely `Migrator`](https://kysely.dev/docs/migrations). `dbType` is `"postgres"`, `"mysql"`, or `"sqlite"` (SQLite and D1):
 
 ```typescript
 import { Migrator } from "kysely/migration";
@@ -92,7 +93,7 @@ if (error) {
 | Migration | What it does |
 |---|---|
 | `0001_init` | Creates the tables and indexes |
-| `0002_timestamptz` | Makes every time column an unambiguous instant: `timestamptz` on PostgreSQL, ISO-8601 UTC text on SQLite/D1 |
+| `0002_timestamptz` | Makes every time column an unambiguous instant: `timestamptz` on PostgreSQL, ISO-8601 UTC text on SQLite/D1, nothing to do on MySQL (its schema is UTC from the start) |
 
 **Upgrading an existing PostgreSQL database from 0.4.x:** `0002_timestamptz` converts existing values and must be told which time zone they were written in (`createMigrationProvider("postgres", { timestampSourceTimeZone: "Asia/Shanghai" })`, default `"UTC"`). See [docs/migrations.md](../../docs/migrations.md#migration-0002--time-zone-aware-timestamps) for how to choose the value and how to verify the result.
 

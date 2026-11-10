@@ -19,7 +19,7 @@ packages/
   s3/           S3-compatible object storage adapter
   azure/        Azure Blob Storage + Cosmos DB adapters
   cloudflare/   Cloudflare R2 Binding storage + D1 Kysely dialect
-  kysely/       SQL metadata store via Kysely (PostgreSQL, SQLite, D1)
+  kysely/       SQL metadata store via Kysely (PostgreSQL, MySQL, SQLite, D1)
 ```
 
 ## Packages
@@ -64,7 +64,7 @@ pnpm add @vankyle/storage-core @vankyle/storage-shared
 
 # Add provider packages as needed
 pnpm add @vankyle/storage-s3       # AWS S3, R2 HTTP, MinIO
-pnpm add @vankyle/storage-kysely   # PostgreSQL / SQLite / D1
+pnpm add @vankyle/storage-kysely   # PostgreSQL / MySQL / SQLite / D1
 pnpm add @vankyle/storage-azure    # Azure Blob + Cosmos DB
 pnpm add @vankyle/storage-cloudflare  # R2 Worker Binding + D1 dialect
 ```

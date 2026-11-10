@@ -6,8 +6,9 @@ const ZONELESS_DATE_TIME =
 /**
  * Converts a time column value to a `Date`.
  *
- * The PostgreSQL driver returns `Date` objects, which pass through.
- * SQLite and D1 return text. The canonical text form is ISO-8601 UTC
+ * The PostgreSQL driver returns `Date` objects, which pass through, as does
+ * `mysql2` (the stores verify it builds them as UTC). SQLite and D1 return
+ * text, and so does `mysql2` with `dateStrings: true`. The canonical text form is ISO-8601 UTC
  * (`2026-01-31T08:00:00.000Z`); a value without a zone designator is read as
  * UTC, because that is what SQLite's `CURRENT_TIMESTAMP` writes. Leaving
  * such a value to `new Date()` would read it in the process time zone and

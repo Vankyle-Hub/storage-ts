@@ -23,6 +23,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async createFile(input: CreateFileInput): Promise<File> {
+    await this.dialect.ensureReady(this.db);
     const now = this.dialect.timestamp(new Date());
     const row = await this.dialect.insertRow(this.db, "files", {
       id: input.id,
@@ -43,6 +44,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async getFile(id: string): Promise<File | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("files")
       .selectAll()
@@ -53,6 +55,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async updateFile(id: string, input: UpdateFileInput): Promise<File> {
+    await this.dialect.ensureReady(this.db);
     const updates: Record<string, unknown> = {
       updated_at: this.dialect.timestamp(new Date()),
     };
@@ -74,6 +77,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async createVersion(input: CreateFileVersionInput): Promise<FileVersion> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.dialect.insertRow(this.db, "file_versions", {
       id: input.id,
       file_id: input.fileId,
@@ -91,6 +95,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async getVersion(id: string): Promise<FileVersion | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("file_versions")
       .selectAll()
@@ -101,6 +106,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async listVersions(fileId: string): Promise<FileVersion[]> {
+    await this.dialect.ensureReady(this.db);
     const rows = await this.db
       .selectFrom("file_versions")
       .selectAll()
@@ -112,6 +118,7 @@ export class KyselyFileStore implements IFileStore {
   }
 
   async getLatestVersion(fileId: string): Promise<FileVersion | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("file_versions")
       .selectAll()

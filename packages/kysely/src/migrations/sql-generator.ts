@@ -1,5 +1,8 @@
 import {
   Kysely,
+  MysqlAdapter,
+  MysqlIntrospector,
+  MysqlQueryCompiler,
   SqliteAdapter,
   SqliteIntrospector,
   SqliteQueryCompiler,
@@ -63,6 +66,15 @@ function makeCollectingDialect(
         new SqliteIntrospector(db),
     };
   }
+  if (dbType === "mysql") {
+    return {
+      createDriver: () => driver,
+      createQueryCompiler: (): QueryCompiler => new MysqlQueryCompiler(),
+      createAdapter: (): DialectAdapter => new MysqlAdapter(),
+      createIntrospector: (db): DatabaseIntrospector =>
+        new MysqlIntrospector(db),
+    };
+  }
   return {
     createDriver: () => driver,
     createQueryCompiler: (): QueryCompiler => new PostgresQueryCompiler(),
@@ -75,6 +87,10 @@ function makeCollectingDialect(
 /**
  * Returns the `up` SQL of one migration as a plain string, statements
  * separated by `;` and a blank line.
+ *
+ * A migration that runs no statement for the given database type (for
+ * example `0002_timestamptz` on MySQL) yields a single SQL comment, so the
+ * result is never an empty script.
  *
  * @param options Same as for `createMigrations`; e.g. the source time zone
  *   baked into the PostgreSQL SQL of `0002_timestamptz`.
@@ -99,6 +115,9 @@ export async function generateMigrationSql(
       );
     }
     await migration.up(db);
+    if (collector.statements.length === 0) {
+      return `-- ${migrationKey}: no statements required for ${dbType}`;
+    }
     return collector.statements.join(";\n\n") + ";";
   } finally {
     await db.destroy();

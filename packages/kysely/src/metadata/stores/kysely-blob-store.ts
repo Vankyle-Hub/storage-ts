@@ -1,4 +1,5 @@
-import type { Kysely } from "kysely";
+import { sql } from "kysely";
+import type { Kysely, Selectable } from "kysely";
 import type {
   IBlobStore,
   CreateBlobInput,
@@ -7,10 +8,11 @@ import type {
 } from "@vankyle/storage-core";
 import type { Blob, BlobReference, StorageProvider } from "@vankyle/storage-core";
 import { BlobStatus } from "@vankyle/storage-core";
-import type { StorageDatabase } from "@/schema/database";
+import type { BlobsTable, StorageDatabase } from "@/schema/database";
 import { blobRowToModel } from "@/mappers/blob-row.mapper";
 import { blobReferenceRowToModel } from "@/mappers/blob-reference-row.mapper";
 import { StoreDialect, type KyselyStoreOptions } from "@/metadata/store-dialect";
+import { computeLocatorHash } from "@/metadata/locator-hash";
 
 export class KyselyBlobStore implements IBlobStore {
   private readonly dialect: StoreDialect;
@@ -23,7 +25,20 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async createBlob(input: CreateBlobInput): Promise<Blob> {
+    await this.dialect.ensureReady(this.db);
     const now = this.dialect.timestamp(new Date());
+    // MySQL enforces locator uniqueness through a hash column (see
+    // computeLocatorHash); the other databases index the columns directly.
+    const extra =
+      this.dialect.databaseType === "mysql"
+        ? {
+            locator_hash: await computeLocatorHash(
+              input.provider,
+              input.bucket,
+              input.objectKey,
+            ),
+          }
+        : undefined;
     const row = await this.dialect.insertRow(this.db, "blobs", {
       id: input.id,
       provider: input.provider,
@@ -39,12 +54,13 @@ export class KyselyBlobStore implements IBlobStore {
       updated_at: now,
       deleted_at: null,
       metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-    });
+    }, extra);
 
     return blobRowToModel(row);
   }
 
   async getBlob(id: string): Promise<Blob | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("blobs")
       .selectAll()
@@ -55,6 +71,7 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async updateBlob(id: string, input: UpdateBlobInput): Promise<Blob> {
+    await this.dialect.ensureReady(this.db);
     const updates: Record<string, unknown> = {
       updated_at: this.dialect.timestamp(new Date()),
     };
@@ -69,6 +86,7 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async findBlobBySha256(sha256: string): Promise<Blob | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("blobs")
       .selectAll()
@@ -84,6 +102,17 @@ export class KyselyBlobStore implements IBlobStore {
     bucket: string,
     objectKey: string,
   ): Promise<Blob | undefined> {
+    await this.dialect.ensureReady(this.db);
+    if (this.dialect.databaseType === "mysql") {
+      // Look up by the indexed hash. Comparing the columns would scan the
+      // table and, under MySQL's PAD SPACE rules, treat 'key' and 'key ' as
+      // equal.
+      const hash = await computeLocatorHash(provider, bucket, objectKey);
+      const found = await sql<Selectable<BlobsTable>>`select * from blobs where locator_hash = ${hash}`.execute(this.db);
+      const match = found.rows[0];
+      return match ? blobRowToModel(match) : undefined;
+    }
+
     const row = await this.db
       .selectFrom("blobs")
       .selectAll()
@@ -96,6 +125,7 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async createReference(input: CreateBlobReferenceInput): Promise<BlobReference> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.dialect.insertRow(this.db, "blob_references", {
       id: input.id,
       blob_id: input.blobId,
@@ -108,6 +138,7 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async listReferences(blobId: string): Promise<BlobReference[]> {
+    await this.dialect.ensureReady(this.db);
     const rows = await this.db
       .selectFrom("blob_references")
       .selectAll()
@@ -118,6 +149,7 @@ export class KyselyBlobStore implements IBlobStore {
   }
 
   async deleteReference(id: string): Promise<void> {
+    await this.dialect.ensureReady(this.db);
     await this.db
       .deleteFrom("blob_references")
       .where("id", "=", id)

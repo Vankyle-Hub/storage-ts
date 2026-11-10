@@ -10,7 +10,7 @@ import {
 import type { DatabaseType } from "@vankyle/storage-kysely";
 import { ValidationError } from "@vankyle/storage-shared";
 
-const DATABASE_TYPES: DatabaseType[] = ["postgres", "sqlite"];
+const DATABASE_TYPES: DatabaseType[] = ["postgres", "mysql", "sqlite"];
 
 // 14 time columns were created by 0001 across the six tables.
 const TIMESTAMP_COLUMN_COUNT = 14;
@@ -151,13 +151,41 @@ describe("0002_timestamptz on sqlite", () => {
   });
 });
 
-describe("unsupported databases", () => {
-  it("has no mysql database type", () => {
-    // MySQL needs its own schema and store implementation; until then it
-    // must not be selectable, so nobody freezes a migration that cannot run.
-    // @ts-expect-error "mysql" is not a DatabaseType.
-    const dbType: DatabaseType = "mysql";
-    void dbType;
+describe("mysql migrations", () => {
+  it("0002_timestamptz runs no statement and yields a non-empty script", async () => {
+    expect(await generateMigrationSql("0002_timestamptz", "mysql")).toBe(
+      "-- 0002_timestamptz: no statements required for mysql",
+    );
+  });
+
+  it("0001_init creates the six tables as utf8mb4_bin InnoDB tables", async () => {
+    const sql = await generateMigrationSql("0001_init", "mysql");
+    const statements = sql.split(";\n\n");
+    expect(statements).toHaveLength(6);
+    for (const statement of statements) {
+      expect(statement).toMatch(/^create table \w+ \(/);
+      expect(statement).toContain("engine=InnoDB default charset=utf8mb4 collate=utf8mb4_bin");
+    }
+  });
+
+  it("0001_init stores time as UTC DATETIME(3) with no session-dependent default", async () => {
+    const sql = await generateMigrationSql("0001_init", "mysql");
+    expect(sql.match(/datetime\(3\)/g)).toHaveLength(TIMESTAMP_COLUMN_COUNT);
+    expect(sql).not.toMatch(/\btimestamp\b/i);
+    expect(sql).not.toMatch(/current_timestamp/i);
+  });
+
+  it("0001_init enforces locator uniqueness through the hash column", async () => {
+    const sql = await generateMigrationSql("0001_init", "mysql");
+    expect(sql).toContain("locator_hash char(64) character set ascii collate ascii_bin not null");
+    expect(sql).toContain("unique key idx_blobs_locator (locator_hash)");
+    // No index may include the 1024-character object_key column.
+    expect(sql).not.toMatch(/key \w+ \([^)]*object_key/);
+  });
+
+  it("0001_init keeps every indexed column within MySQL 5.6's 767-byte limit", async () => {
+    const sql = await generateMigrationSql("0001_init", "mysql");
+    expect(sql).toContain("key idx_files_owner (owner_id(191))");
   });
 });
 
