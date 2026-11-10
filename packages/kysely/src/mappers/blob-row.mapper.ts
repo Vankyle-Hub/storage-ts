@@ -3,6 +3,7 @@ import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { BlobsTable } from "@/schema/database";
 import { ensureDate } from "@/mappers/timestamp";
+import { ensureNumber } from "@/mappers/number";
 
 type BlobRow = Selectable<BlobsTable>;
 
@@ -12,7 +13,7 @@ export function blobRowToModel(row: BlobRow): Blob {
     provider: row.provider as StorageProvider,
     bucket: row.bucket,
     objectKey: row.object_key,
-    size: row.size,
+    size: ensureNumber(row.size),
     mimeType: row.mime_type ?? undefined,
     sha256: row.sha256 ?? undefined,
     etag: row.etag ?? undefined,

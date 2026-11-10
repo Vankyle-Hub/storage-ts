@@ -3,6 +3,7 @@ import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { UploadedPartsTable } from "@/schema/database";
 import { ensureDate } from "@/mappers/timestamp";
+import { ensureNumber } from "@/mappers/number";
 
 type UploadedPartRow = Selectable<UploadedPartsTable>;
 
@@ -11,7 +12,7 @@ export function uploadedPartRowToModel(row: UploadedPartRow): UploadedPart {
     id: row.id,
     sessionId: row.session_id,
     partNumber: row.part_number,
-    size: row.size,
+    size: ensureNumber(row.size),
     etag: row.etag ?? undefined,
     checksumSha256: row.checksum_sha256 ?? undefined,
     providerPartId: row.provider_part_id ?? undefined,

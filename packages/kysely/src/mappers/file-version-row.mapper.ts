@@ -3,6 +3,7 @@ import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { FileVersionsTable } from "@/schema/database";
 import { ensureDate } from "@/mappers/timestamp";
+import { ensureNumber } from "@/mappers/number";
 
 type FileVersionRow = Selectable<FileVersionsTable>;
 
@@ -12,7 +13,7 @@ export function fileVersionRowToModel(row: FileVersionRow): FileVersion {
     fileId: row.file_id,
     blobId: row.blob_id,
     version: row.version,
-    size: row.size,
+    size: ensureNumber(row.size),
     mimeType: row.mime_type ?? undefined,
     sha256: row.sha256 ?? undefined,
     createdAt: ensureDate(row.created_at),
