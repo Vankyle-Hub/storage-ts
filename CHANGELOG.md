@@ -12,9 +12,10 @@ updating from 0.4.x.
 - **`uploadPart` and `getUploadPartUrl` reject single-mode sessions with
   `ValidationError` (`field: "mode"`)** instead of `MetadataNotFoundError`.
   (#46)
-- **MySQL has its own database type.** Pass `"mysql"` where you passed
-  `"postgres"` for MySQL (`createMigrations`, `createMigrationProvider`,
-  `generateMigrationSql`, `generateAllMigrationSql`). (#48)
+- **MySQL and SQL Server are no longer listed as supported.** They were
+  documented under the `"postgres"` database type, but the schema and the
+  Kysely stores never worked there. Do not pass `"postgres"` for them; see
+  [docs/migrations.md](docs/migrations.md#unsupported-databases). (#48, #52)
 - **New migration `0002_timestamptz`.** `migrateToLatest()` now also converts
   the time columns: `timestamp` → `timestamptz` on PostgreSQL, with existing
   values converted using a source time zone you may need to supply. (#48)
@@ -22,7 +23,6 @@ updating from 0.4.x.
   local time zone. (#48)
 - **`generateMigrationSql` throws `ValidationError`** (`field:
   "migrationKey"`) for an unknown key instead of a plain `Error`. (#48)
-- SQL Server is no longer listed as supported by the bundled migrations.
 
 ### Added
 
@@ -40,8 +40,8 @@ updating from 0.4.x.
 - `MigrationOptions.timestampSourceTimeZone` (default `"UTC"`) for
   `createMigrations`, `createMigrationProvider`, `generateMigrationSql` and
   `generateAllMigrationSql`. (#48)
-- `generateMigrationSql` / `generateAllMigrationSql` emit `0002_timestamptz`
-  and support the `"mysql"` type. (#48)
+- `generateMigrationSql` / `generateAllMigrationSql` emit `0002_timestamptz`.
+  (#48)
 
 ### Fixed
 
@@ -52,8 +52,7 @@ updating from 0.4.x.
 
 1. **Code.** If you implement `IStorageService` yourself, add `uploadObject`.
    If you catch `MetadataNotFoundError` from `uploadPart` / `getUploadPartUrl`
-   to detect single-mode sessions, catch `ValidationError` instead. If you use
-   MySQL, change the database type to `"mysql"`.
+   to detect single-mode sessions, catch `ValidationError` instead.
 2. **PostgreSQL with existing data.** Before the first `migrateToLatest()` on
    0.5.0, decide which time zone the existing rows were written in — the time
    zone of the application processes, not of the database server — and pass it
@@ -71,9 +70,10 @@ updating from 0.4.x.
 
 ### Known limitations
 
-- MySQL is not usable end to end (#52), and the Kysely stores cannot bind
-  `Date` parameters on SQLite/D1 without application-side serialization (#53).
-  Both predate this release.
+- The Kysely stores cannot bind `Date` parameters on SQLite/D1 without
+  application-side serialization (#53). This predates the release.
+- MySQL and SQL Server need a schema and store implementation of their own
+  before they can be supported (#52).
 
 ## 0.4.1
 
