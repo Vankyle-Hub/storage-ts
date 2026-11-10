@@ -31,6 +31,7 @@ import { FileStatus } from "@/domain/enums/file-status";
 import { generateId } from "@/utils/ids";
 import type { IObjectKeyPolicy } from "@/application/policies/object-key-policy";
 import { DefaultObjectKeyPolicy } from "@/application/policies/object-key-policy";
+import { assertValidObjectKey } from "@/application/policies/object-key-validation";
 import type { FileVersion } from "@/domain/models/file-version";
 import { ValidationError } from "@vankyle/storage-shared";
 
@@ -73,6 +74,10 @@ export class DefaultStorageService implements IStorageService {
       ownerId: request.ownerId,
       prefix: this.objectKeyPrefix,
     });
+    // Reject a bad key now, before a provider upload is opened or a session
+    // row is written. Otherwise it surfaces only at upload time (provider
+    // limit) or at completion (database index limit).
+    assertValidObjectKey(objectKey);
 
     let providerUploadId: string | undefined;
     let uploadUrl: SignedAccess | undefined;

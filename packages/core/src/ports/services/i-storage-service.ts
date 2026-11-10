@@ -116,6 +116,12 @@ export interface DeleteFileRequest {
 }
 
 export interface IStorageService {
+  /**
+   * Starts an upload session.
+   *
+   * @throws ValidationError (`field: "objectKey"`) when the generated object
+   *   key is empty or longer than 1024 UTF-8 bytes.
+   */
   createUploadSession(request: CreateUploadSessionRequest): Promise<CreateUploadSessionResponse>;
 
   getUploadSession(sessionId: string): Promise<UploadSession | undefined>;

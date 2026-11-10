@@ -400,6 +400,8 @@ completeUploadSession
 
 Override by implementing `IObjectKeyPolicy` and passing it in `objectKeyPolicy`.
 
+Whatever the policy returns is validated by `createUploadSession` before anything is uploaded or stored: the key must be non-empty and at most `MAX_OBJECT_KEY_BYTES` (1024) **UTF-8 bytes**, otherwise a `ValidationError` (`field: "objectKey"`) is thrown. 1024 bytes is the object key limit of S3 and R2, and it keeps the `(provider, bucket, object_key)` unique index entry within the limits of every supported metadata database. Keep `objectKeyPrefix` and owner ids short enough to leave room for the generated id and extension.
+
 ---
 
 ## Provider Compatibility Strategy
