@@ -12,10 +12,12 @@ updating from 0.4.x.
 - **`uploadPart` and `getUploadPartUrl` reject single-mode sessions with
   `ValidationError` (`field: "mode"`)** instead of `MetadataNotFoundError`.
   (#46)
-- **MySQL and SQL Server are no longer listed as supported.** They were
-  documented under the `"postgres"` database type, but the schema and the
-  Kysely stores never worked there. Do not pass `"postgres"` for them; see
-  [docs/migrations.md](docs/migrations.md#unsupported-databases). (#48, #52)
+- **MySQL uses the new `"mysql"` database type, and SQL Server is no longer
+  listed as supported.** Both were documented under `"postgres"`, but the
+  schema and the Kysely stores never worked there. Never pass `"postgres"`
+  for a MySQL database. (#48, #52)
+- **`createUploadSession` rejects object keys that are empty or longer than
+  1024 UTF-8 bytes** with `ValidationError` (`field: "objectKey"`). (#56)
 - **New migration `0002_timestamptz`.** `migrateToLatest()` now also converts
   the time columns: `timestamp` → `timestamptz` on PostgreSQL, with existing
   values converted using a source time zone you may need to supply. (#48)
@@ -42,9 +44,30 @@ updating from 0.4.x.
   `generateAllMigrationSql`. (#48)
 - `generateMigrationSql` / `generateAllMigrationSql` emit `0002_timestamptz`.
   (#48)
+- **MySQL support** (5.6.4+, 5.7, 8.x) in `@vankyle/storage-kysely`: database
+  type `"mysql"` with a schema of its own (`utf8mb4_bin`, UTC `DATETIME(3)`
+  time columns, blob locator uniqueness through a hash column) and a store
+  path that does not need `RETURNING`. The `mysql2` pool must be created with
+  `timezone: "Z"` (or `dateStrings: true`); the stores check this and refuse
+  to run otherwise. See
+  [docs/migrations.md](docs/migrations.md#mysql-schema-and-time-handling).
+  (#52)
+- `KyselyMetadataStore` and the Kysely stores accept
+  `KyselyStoreOptions { databaseType }`. The type is detected from the Kysely
+  dialect when omitted. (#53)
+- `assertValidObjectKey` and `MAX_OBJECT_KEY_BYTES` exported from
+  `@vankyle/storage-core`. (#56)
 
 ### Fixed
 
+- **SQLite / D1:** the Kysely stores bound `Date` parameters, which SQLite
+  drivers and D1 reject, so writes failed unless the application serialized
+  them. The stores now write ISO-8601 UTC text themselves. (#53)
+- **PostgreSQL:** `bigint` columns reached the domain models as strings, and
+  `completeUploadSession` failed its size check for a correct upload
+  (`expected 3, got 3`) whenever the session had `expectedSize`. (#58)
+- Documentation examples import `Migrator` from `kysely/migration`, as Kysely
+  0.29 requires.
 - `docs/getting-started.md` no longer says that R2 binding single-mode uploads
   are relayed through `uploadPart`, which never worked. (#46)
 
@@ -62,18 +85,25 @@ updating from 0.4.x.
    the objects' `LastModified`. Full procedure:
    [docs/migrations.md](docs/migrations.md#migration-0002--time-zone-aware-timestamps).
 3. **SQLite / D1.** Regenerate and apply the migration SQL; `0002` only
-   normalizes the text format of existing values and needs no time zone.
+   normalizes the text format of existing values and needs no time zone. If
+   you added a Kysely plugin to serialize `Date` parameters, it is no longer
+   needed.
 4. **Projects that keep their own copy of the migration SQL.** `0001_init` is
    unchanged. Generate `0002_timestamptz` with `generateMigrationSql`; for
    PostgreSQL the source time zone is baked into the SQL, and the SQL must be
    applied exactly once.
 
+### Verified against
+
+PostgreSQL 17 and 18, MySQL 5.6, 5.7 and 8.4, and SQLite, running the
+migrations and the full upload flow with the writer and reader in different
+time zones.
+
 ### Known limitations
 
-- The Kysely stores cannot bind `Date` parameters on SQLite/D1 without
-  application-side serialization (#53). This predates the release.
-- MySQL and SQL Server need a schema and store implementation of their own
-  before they can be supported (#52).
+- SQL Server is not supported.
+- A real Cloudflare D1 database was not part of the verification; D1 is
+  covered through SQLite.
 
 ## 0.4.1
 
