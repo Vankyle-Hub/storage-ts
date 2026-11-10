@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
+
+This release contains breaking changes. Read the upgrade notes before
+updating from 0.5.0. There is no database migration.
 
 ### Breaking changes
 
@@ -52,6 +55,43 @@
   part. The Kysely store failed on the `(session_id, part_number)` unique
   index; the Cosmos store silently kept both and passed duplicates to the
   provider on completion. (#62)
+
+### Upgrade notes
+
+1. **Error handling.** Calls on a completed, aborted or expired session now
+   throw `UploadSessionStateError` or `UploadSessionExpiredError`. If you
+   catch `ValidationError` with `field: "status"` from `uploadObject`,
+   catch `UploadSessionStateError` instead. Decide what your application
+   does when a session expires mid-upload: the client has to start a new
+   session.
+2. **`abortUploadSession`.** Do not call it to clean up a session that has
+   already completed; it now throws.
+3. **Custom `IUploadSessionStore`.** `addPart` must replace the part with the
+   same `(sessionId, partNumber)` and `listParts` must return at most one
+   part per part number. The Kysely and Cosmos stores already do.
+4. **Cosmos DB.** No data change is needed. Parts written by 0.5.0 or earlier
+   keep their random ids; duplicates for a part number are resolved on read
+   to the most recent one.
+5. **`expectedSize`.** Pass a non-negative integer. With `S3Storage` a
+   single-mode presigned PUT URL now only accepts a body of exactly that
+   size, so clients that declared one size and uploaded another get
+   `403 SignatureDoesNotMatch` from the provider instead of an error at
+   `completeUploadSession`.
+
+### Verified against
+
+PostgreSQL 18, MySQL 5.6, 5.7 and 8.4, and SQLite for the session rules and
+part replacement; MinIO for size-bound presigned URLs.
+
+### Known limitations
+
+- Two concurrent `completeUploadSession` calls for one session are not
+  serialized: the second fails with `MetadataConflictError` on the Kysely
+  stores; `CosmosBlobStore` has no locator uniqueness.
+- Size-bound presigned URLs were not verified against AWS S3 or Cloudflare
+  R2 themselves, and the Cosmos store was verified with a fake container
+  only.
+- Azure SAS URLs cannot be bound to a size.
 
 ## 0.5.0
 
