@@ -10,3 +10,7 @@ export {
   MetadataConflictError,
 } from "@/errors/metadata-error";
 export { ValidationError } from "@/errors/validation-error";
+export {
+  UploadSizeMismatchError,
+  UploadEtagMismatchError,
+} from "@/errors/upload-error";

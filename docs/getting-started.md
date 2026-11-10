@@ -15,6 +15,7 @@ This guide walks through the most common usage patterns. For the full design rat
   - [Multipart — client-direct parts](#multipart--client-direct-parts)
   - [Multipart — server-proxied parts](#multipart--server-proxied-parts)
 - [Retrieving an upload session](#retrieving-an-upload-session)
+- [Handling upload verification errors](#handling-upload-verification-errors)
 - [Running database migrations](#running-database-migrations)
   - [PostgreSQL / MySQL / SQLite](#postgresql--mysql--sqlite)
   - [Cloudflare D1 — programmatic](#cloudflare-d1--programmatic)
@@ -371,6 +372,43 @@ console.log(session.status);        // "pending" | "in-progress" | "completed" |
 ```
 
 Returns `undefined` when the session ID is not found.
+
+---
+
+## Handling upload verification errors
+
+`completeUploadSession` verifies the stored object before it writes any metadata. Two typed errors from `@vankyle/storage-shared` report a failed check; both carry `sessionId`, `expected`, and `actual`:
+
+| Error | `code` | Raised when |
+|---|---|---|
+| `UploadSizeMismatchError` | `UPLOAD_SIZE_MISMATCH` | The session was created with `expectedSize` and the stored object has a different size |
+| `UploadEtagMismatchError` | `UPLOAD_ETAG_MISMATCH` | You passed `etag` to `completeUploadSession` and the stored object's ETag differs (compared verbatim, including quotes) |
+
+```typescript
+import {
+  UploadSizeMismatchError,
+  UploadEtagMismatchError,
+} from "@vankyle/storage-shared";
+
+try {
+  await storageService.completeUploadSession({ sessionId, etag });
+} catch (error) {
+  if (error instanceof UploadSizeMismatchError) {
+    // e.g. truncated upload: error.expected = 1048576, error.actual = 524288
+    return reply.status(422).send({
+      code: error.code,
+      expected: error.expected,
+      actual: error.actual,
+    });
+  }
+  if (error instanceof UploadEtagMismatchError) {
+    return reply.status(409).send({ code: error.code });
+  }
+  throw error;
+}
+```
+
+`actual` is `undefined` when the provider reported no size or ETag. Because nothing has been written yet, the session is still open after either error: let the client upload again and call `completeUploadSession` once more, or call `abortUploadSession`. If your code runs across package or bundle boundaries where `instanceof` is unreliable, branch on `error.code` instead.
 
 ---
 

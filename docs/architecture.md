@@ -52,7 +52,7 @@ The heart of the system. Contains:
 
 Cross-package infrastructure that is not specific to any domain concept:
 
-- `BaseError`, `StorageError`, `MetadataError`, `ValidationError` and their subtypes
+- `BaseError`, `StorageError`, `MetadataError`, `ValidationError`, the upload verification errors, and their subtypes
 - `Result<T, E>` — railway-oriented result type (`ok` / `err`)
 - JSON value types (`JsonValue`, `JsonObject`, etc.)
 - Utility types (`Maybe<T>`, `PartialBy<T,K>`, `RequiredBy<T,K>`, `Defined<T>`)
@@ -451,6 +451,10 @@ All errors extend `BaseError` from `packages/shared`. Provider adapters are resp
 | `MetadataNotFoundError` | `METADATA_NOT_FOUND` | Entity not found (`entityType`, `entityId`) |
 | `MetadataConflictError` | `METADATA_CONFLICT` | Uniqueness constraint violation |
 | `ValidationError` | `VALIDATION_ERROR` | Schema or input validation failure |
+| `UploadSizeMismatchError` | `UPLOAD_SIZE_MISMATCH` | `completeUploadSession`: stored size differs from the session's `expectedSize` (`sessionId`, `expected`, `actual`) |
+| `UploadEtagMismatchError` | `UPLOAD_ETAG_MISMATCH` | `completeUploadSession`: stored ETag differs from the ETag passed by the caller (`sessionId`, `expected`, `actual`) |
+
+Both upload mismatch errors are raised before any blob or file record is written, so the session stays open and the caller can re-upload and complete again, or abort.
 
 ---
 

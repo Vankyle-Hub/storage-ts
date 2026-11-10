@@ -20,6 +20,8 @@ All errors extend `BaseError`, which extends the native `Error` class and adds a
 | `MetadataNotFoundError` | `METADATA_NOT_FOUND` | `entityType`, `entityId` |
 | `MetadataConflictError` | `METADATA_CONFLICT` | `entityType`, `entityId` |
 | `ValidationError` | `VALIDATION_ERROR` | `field?` |
+| `UploadSizeMismatchError` | `UPLOAD_SIZE_MISMATCH` | `sessionId`, `expected`, `actual` |
+| `UploadEtagMismatchError` | `UPLOAD_ETAG_MISMATCH` | `sessionId`, `expected`, `actual` |
 
 ### `Result<T, E>`
 

@@ -1,6 +1,8 @@
 import {
   CapabilityNotSupportedError,
   MetadataNotFoundError,
+  UploadEtagMismatchError,
+  UploadSizeMismatchError,
 } from "@vankyle/storage-shared";
 import type { IStorage } from "@/ports/storage/i-storage";
 import type { IMetadataStore } from "@/ports/metadata/i-metadata-store";
@@ -274,16 +276,17 @@ export class DefaultStorageService implements IStorageService {
       objectKey: session.objectKey,
     });
 
-    // Validate expected size and etag if provided
+    // Validate expected size and etag if provided. These run before any
+    // metadata write, so a mismatch leaves the session open for a retry.
     if (session.expectedSize !== undefined && head.contentLength !== session.expectedSize) {
-      throw new Error(
-        `Uploaded size mismatch: expected ${session.expectedSize}, got ${head.contentLength}`,
+      throw new UploadSizeMismatchError(
+        session.id,
+        session.expectedSize,
+        head.contentLength,
       );
     }
     if (request.etag !== undefined && head.etag !== request.etag) {
-      throw new Error(
-        `Uploaded ETag mismatch: expected ${request.etag}, got ${head.etag}`,
-      );
+      throw new UploadEtagMismatchError(session.id, request.etag, head.etag);
     }
 
     // Mark session completed
