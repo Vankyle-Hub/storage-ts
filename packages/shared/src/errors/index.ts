@@ -11,6 +11,8 @@ export {
 } from "@/errors/metadata-error";
 export { ValidationError } from "@/errors/validation-error";
 export {
+  UploadSessionStateError,
+  UploadSessionExpiredError,
   UploadSizeMismatchError,
   UploadEtagMismatchError,
 } from "@/errors/upload-error";

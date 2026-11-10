@@ -11,7 +11,12 @@ import { BlobStatus } from "@vankyle/storage-core";
 import type { BlobsTable, StorageDatabase } from "@/schema/database";
 import { blobRowToModel } from "@/mappers/blob-row.mapper";
 import { blobReferenceRowToModel } from "@/mappers/blob-reference-row.mapper";
-import { StoreDialect, type KyselyStoreOptions } from "@/metadata/store-dialect";
+import { MetadataConflictError } from "@vankyle/storage-shared";
+import {
+  StoreDialect,
+  isUniqueViolation,
+  type KyselyStoreOptions,
+} from "@/metadata/store-dialect";
 import { computeLocatorHash } from "@/metadata/locator-hash";
 
 export class KyselyBlobStore implements IBlobStore {
@@ -39,22 +44,37 @@ export class KyselyBlobStore implements IBlobStore {
             ),
           }
         : undefined;
-    const row = await this.dialect.insertRow(this.db, "blobs", {
-      id: input.id,
-      provider: input.provider,
-      bucket: input.bucket,
-      object_key: input.objectKey,
-      size: input.size,
-      mime_type: input.mimeType ?? null,
-      sha256: input.sha256 ?? null,
-      etag: input.etag ?? null,
-      storage_class: input.storageClass ?? null,
-      status: BlobStatus.Active,
-      created_at: now,
-      updated_at: now,
-      deleted_at: null,
-      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-    }, extra);
+    let row: Selectable<BlobsTable>;
+    try {
+      row = await this.dialect.insertRow(this.db, "blobs", {
+        id: input.id,
+        provider: input.provider,
+        bucket: input.bucket,
+        object_key: input.objectKey,
+        size: input.size,
+        mime_type: input.mimeType ?? null,
+        sha256: input.sha256 ?? null,
+        etag: input.etag ?? null,
+        storage_class: input.storageClass ?? null,
+        status: BlobStatus.Active,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      }, extra);
+    } catch (error: unknown) {
+      // One object, one blob: the locator (provider, bucket, object_key) is
+      // unique. Report a second blob for the same object as a conflict the
+      // caller can recognise, not as a raw driver error.
+      if (isUniqueViolation(error)) {
+        throw new MetadataConflictError(
+          "Blob",
+          `${input.provider}/${input.bucket}/${input.objectKey}`,
+          { cause: error },
+        );
+      }
+      throw error;
+    }
 
     return blobRowToModel(row);
   }

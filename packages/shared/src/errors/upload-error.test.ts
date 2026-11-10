@@ -1,9 +1,40 @@
 import { describe, it, expect } from "vitest";
 import {
   BaseError,
+  UploadSessionStateError,
+  UploadSessionExpiredError,
   UploadSizeMismatchError,
   UploadEtagMismatchError,
 } from "@vankyle/storage-shared";
+
+describe("UploadSessionStateError", () => {
+  it("carries sessionId, status and operation", () => {
+    const cause = new Error("root");
+    const err = new UploadSessionStateError("session-1", "completed", "registerPart", { cause });
+    expect(err).toBeInstanceOf(BaseError);
+    expect(err.name).toBe("UploadSessionStateError");
+    expect(err.code).toBe("UPLOAD_SESSION_INVALID_STATE");
+    expect(err.sessionId).toBe("session-1");
+    expect(err.status).toBe("completed");
+    expect(err.operation).toBe("registerPart");
+    expect(err.message).toContain("session-1");
+    expect(err.message).toContain("completed");
+    expect(err.cause).toBe(cause);
+  });
+});
+
+describe("UploadSessionExpiredError", () => {
+  it("carries sessionId and expiresAt", () => {
+    const expiresAt = new Date("2026-01-31T08:00:00.000Z");
+    const err = new UploadSessionExpiredError("session-1", expiresAt);
+    expect(err).toBeInstanceOf(BaseError);
+    expect(err.name).toBe("UploadSessionExpiredError");
+    expect(err.code).toBe("UPLOAD_SESSION_EXPIRED");
+    expect(err.sessionId).toBe("session-1");
+    expect(err.expiresAt).toBe(expiresAt);
+    expect(err.message).toContain("2026-01-31T08:00:00.000Z");
+  });
+});
 
 describe("UploadSizeMismatchError", () => {
   it("carries sessionId, expected and actual", () => {
