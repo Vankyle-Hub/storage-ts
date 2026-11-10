@@ -1,8 +1,8 @@
 # Plan
 
-1. `types.ts`: add `"mysql"`, `MigrationOptions`, zone validation. `getColumnTypes` unchanged in effect (0001 frozen).
+1. `types.ts`: `MigrationOptions`, zone validation; document MySQL / SQL Server as unsupported. `getColumnTypes` unchanged in effect (0001 frozen).
 2. `0002_timestamptz.ts`: frozen column list; PostgreSQL via raw `ALTER TABLE` built with `sql.ref` / `sql.lit` (the schema builder cannot express `USING`); SQLite `UPDATE … WHERE col GLOB …`.
-3. `index.ts` / `sql-generator.ts`: thread options through, MySQL query compiler, comment for empty scripts, typed unknown-key error.
+3. `index.ts` / `sql-generator.ts`: thread options through, typed unknown-key error.
 4. Mappers: one shared `ensureDate` in `mappers/timestamp.ts`.
 5. Tests: registry, fixtures (frozen SQL), per-dialect statements, option validation, mapper parsing.
 6. Verify on real databases (throwaway Docker containers, `node:sqlite`).

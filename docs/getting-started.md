@@ -6,7 +6,6 @@ This guide walks through the most common usage patterns. For the full design rat
 
 - [Installation](#installation)
 - [S3 + PostgreSQL (Kysely)](#s3--postgresql-kysely)
-- [S3 + MySQL (Kysely)](#s3--mysql-kysely)
 - [Azure Blob + Cosmos DB](#azure-blob--cosmos-db)
 - [Cloudflare Worker: R2 Binding + D1](#cloudflare-worker-r2-binding--d1)
 - [Upload patterns](#upload-patterns)
@@ -15,7 +14,7 @@ This guide walks through the most common usage patterns. For the full design rat
   - [Multipart — server-proxied parts](#multipart--server-proxied-parts)
 - [Retrieving an upload session](#retrieving-an-upload-session)
 - [Running database migrations](#running-database-migrations)
-  - [PostgreSQL / MySQL / SQLite](#postgresql--mysql--sqlite)
+  - [PostgreSQL / SQLite](#postgresql--sqlite)
   - [Cloudflare D1 — programmatic](#cloudflare-d1--programmatic)
   - [Cloudflare D1 — generate SQL for wrangler](#cloudflare-d1--generate-sql-for-wrangler)
 
@@ -36,7 +35,7 @@ pnpm add @vankyle/storage-core @vankyle/storage-shared
 | AWS S3 / R2 HTTP / MinIO | `@vankyle/storage-s3` |
 | Azure Blob + Cosmos DB | `@vankyle/storage-azure` |
 | Cloudflare R2 Binding + D1 | `@vankyle/storage-cloudflare` |
-| PostgreSQL / MySQL / SQLite | `@vankyle/storage-kysely` + `kysely` |
+| PostgreSQL / SQLite | `@vankyle/storage-kysely` + `kysely` |
 
 ---
 
@@ -77,23 +76,6 @@ export const storageService = new DefaultStorageService({
   defaultReadUrlExpiresInSeconds: 900,
 });
 ```
-
----
-
-## S3 + MySQL (Kysely)
-
-```typescript
-import { MysqlDialect } from "kysely";
-import { createPool } from "mysql2";
-
-const db = new Kysely<StorageDatabase>({
-  dialect: new MysqlDialect({
-    pool: createPool({ uri: process.env.DATABASE_URL }),
-  }),
-});
-```
-
-Everything else is identical to the PostgreSQL example, except that migrations take the `"mysql"` database type. MySQL support currently has known gaps — see [migrations.md](migrations.md#databasetype).
 
 ---
 
@@ -342,11 +324,11 @@ Orphaned blobs (blobs with no remaining references) are marked with `BlobStatus.
 
 ## Running database migrations
 
-Migrations are database-type-aware. Pass `'postgres'`, `'mysql'`, or `'sqlite'` to get DDL that matches your database's type system. For a full reference see [migrations.md](migrations.md).
+Migrations are database-type-aware. Pass `'postgres'` or `'sqlite'` to get DDL that matches your database's type system. For a full reference see [migrations.md](migrations.md).
 
 > **Upgrading from 0.4.x on PostgreSQL?** Migration `0002_timestamptz` converts the time columns to `timestamptz` and needs to know which time zone the existing values were written in. Read [Migration 0002](migrations.md#migration-0002--time-zone-aware-timestamps) before running `migrateToLatest()` against a database that already holds data.
 
-### PostgreSQL / MySQL / SQLite
+### PostgreSQL / SQLite
 
 ```typescript
 import { Migrator } from "kysely";
@@ -360,7 +342,7 @@ const migrator = new Migrator({
 const { error, results } = await migrator.migrateToLatest();
 ```
 
-For MySQL or standard SQLite pass `"mysql"` or `"sqlite"` respectively. (Up to 0.4.x MySQL used `"postgres"`.)
+For standard SQLite pass `"sqlite"`. MySQL and SQL Server are not supported; see [migrations.md](migrations.md#unsupported-databases).
 
 If the existing PostgreSQL data was written by processes running in a zone other than UTC, pass it once, for the run that applies `0002`:
 

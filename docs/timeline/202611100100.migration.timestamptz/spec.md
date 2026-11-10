@@ -11,7 +11,7 @@ Consumers: applications already on 0.4.x that must run the migration against liv
 ## Contract
 
 ```typescript
-type DatabaseType = "postgres" | "mysql" | "sqlite";
+type DatabaseType = "postgres" | "sqlite";
 
 interface MigrationOptions {
   /** PostgreSQL only. Zone the existing values were written in. Default "UTC". */
@@ -31,15 +31,14 @@ Migration keys, in order: `0001_init`, `0002_timestamptz`.
 | Database type | `up` | `down` |
 |---|---|---|
 | `postgres` | One `ALTER TABLE` per table: each column `TYPE timestamptz USING col AT TIME ZONE '<zone>'`. Columns with `DEFAULT CURRENT_TIMESTAMP` keep that default and `NOT NULL`. | Same with `TYPE timestamp`; with the same zone the original wall-clock values are restored exactly. |
-| `mysql` | No statement. | No statement. |
 | `sqlite` | Per column: values matching `YYYY-MM-DD HH:MM:SS` exactly are rewritten to `YYYY-MM-DDTHH:MM:SS.000Z`. Other values untouched. Idempotent. No DDL. | No statement. |
 
 Invariants and errors:
 
-- `0001_init` is frozen. Its SQL for `postgres` and `sqlite` is byte-identical to 0.4.x. For `mysql` it uses the column types `postgres` used, compiled with MySQL quoting.
+- `0001_init` is frozen. Its SQL for `postgres` and `sqlite` is byte-identical to 0.4.x.
+- MySQL and SQL Server are not supported and have no `DatabaseType`. (An earlier revision of this spec added `"mysql"`; see notes.)
 - `timestampSourceTimeZone` may contain only letters, digits and `_ + - / :`, at most 64 characters; otherwise `ValidationError` with `field: "timestampSourceTimeZone"`, thrown when the migrations are created, for every database type.
 - `generateMigrationSql` with an unknown key throws `ValidationError` with `field: "migrationKey"` (was a plain `Error`).
-- `generateMigrationSql` never returns an empty script: a migration with no statement for the database type yields `-- <key>: no statements required for <dbType>`.
 - Row mappers read a zone-less text value (`YYYY-MM-DD[ T]HH:MM[:SS[.fff]]`) as UTC. Values with a zone designator and `Date` objects are unchanged.
 
 ## Definition of done
@@ -50,5 +49,5 @@ Invariants and errors:
 
 ## Out of scope
 
-- Making `KyselyMetadataStore` writes work on SQLite/D1 (`Date` binding) and on MySQL (`RETURNING`, index key length). Pre-existing; documented, not fixed here.
-- SQL Server.
+- Making `KyselyMetadataStore` writes work on SQLite/D1 (`Date` binding). Pre-existing; documented, not fixed here.
+- MySQL and SQL Server support. Each needs its own schema and store design.

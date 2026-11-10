@@ -10,7 +10,7 @@ import {
 import type { DatabaseType } from "@vankyle/storage-kysely";
 import { ValidationError } from "@vankyle/storage-shared";
 
-const DATABASE_TYPES: DatabaseType[] = ["postgres", "mysql", "sqlite"];
+const DATABASE_TYPES: DatabaseType[] = ["postgres", "sqlite"];
 
 // 14 time columns were created by 0001 across the six tables.
 const TIMESTAMP_COLUMN_COUNT = 14;
@@ -55,13 +55,6 @@ describe("frozen migration SQL", () => {
     const sql = await generateMigrationSql("0001_init", "postgres");
     expect(sql).toContain('"created_at" timestamp default CURRENT_TIMESTAMP not null');
     expect(sql).not.toContain("timestamptz");
-  });
-
-  it("gives mysql the column types it had under 'postgres', with mysql quoting", async () => {
-    const mysql = await generateMigrationSql("0001_init", "mysql");
-    const postgres = await generateMigrationSql("0001_init", "postgres");
-    expect(mysql).toContain("`created_at` timestamp default CURRENT_TIMESTAMP not null");
-    expect(mysql.replace(/`/g, '"')).toBe(postgres);
   });
 });
 
@@ -158,11 +151,13 @@ describe("0002_timestamptz on sqlite", () => {
   });
 });
 
-describe("0002_timestamptz on mysql", () => {
-  it("runs no statement and yields a non-empty script", async () => {
-    expect(await generateMigrationSql("0002_timestamptz", "mysql")).toBe(
-      "-- 0002_timestamptz: no statements required for mysql",
-    );
+describe("unsupported databases", () => {
+  it("has no mysql database type", () => {
+    // MySQL needs its own schema and store implementation; until then it
+    // must not be selectable, so nobody freezes a migration that cannot run.
+    // @ts-expect-error "mysql" is not a DatabaseType.
+    const dbType: DatabaseType = "mysql";
+    void dbType;
   });
 });
 

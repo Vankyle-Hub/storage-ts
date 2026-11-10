@@ -1,6 +1,6 @@
 # Notes
 
-Outcome: completed. `0002_timestamptz` makes every time column an unambiguous instant; `DatabaseType` gains `"mysql"`.
+Outcome: completed. `0002_timestamptz` makes every time column an unambiguous instant. MySQL and SQL Server are declared unsupported.
 
 ## What was checked on real databases
 
@@ -11,7 +11,7 @@ Outcome: completed. `0002_timestamptz` makes every time column an unambiguous in
 
 ## Decisions
 
-- **MySQL runs no statement.** MySQL `TIMESTAMP` already stores a UTC instant (converted through the session time zone), and there is no `timestamptz` to move to. The migration is still registered so the history is the same on every database.
+- **MySQL is unsupported rather than split into its own type.** The first revision added a `"mysql"` database type whose `0002` ran no statement. Verification then showed MySQL does not work at all (below). Shipping a `"mysql"` type would have frozen a `0001` that cannot be applied, so the maintainer decided to treat MySQL and SQL Server as unsupported until they get a schema and store implementation of their own. `DatabaseType` stays `"postgres" | "sqlite"`.
 - **SQLite needs no source time zone.** Confirmed that SQLite cannot bind a JavaScript `Date` (`node:sqlite` rejects it; `better-sqlite3` and D1 document the same, not executed here). So `KyselyMetadataStore` cannot have written local-time values there: anything stored is either text the application serialized itself, or the column default `CURRENT_TIMESTAMP`, which is UTC by definition. The migration therefore only normalizes the default's format, and the mappers now read zone-less text as UTC (they used to read it in the process zone — wrong for `CURRENT_TIMESTAMP`).
 - **Zone as an option, validated, default `UTC`.** Old values are in the zone of the writing *process*, which the database cannot know.
 - **Fixtures instead of snapshots** for frozen SQL: readable `.sql` files that downstream projects can diff against their own copies.
@@ -19,5 +19,5 @@ Outcome: completed. `0002_timestamptz` makes every time column an unambiguous in
 
 ## Findings outside this task (not fixed)
 
-- **MySQL:** on 8.4 with `utf8mb4`, `0001_init` fails at `idx_blobs_locator` (`Specified key was too long; max key length is 3072 bytes`), and `INSERT … RETURNING` — used by every store method — is a syntax error. MySQL support was already non-functional before this change. Documented as a known limitation.
+- **MySQL:** on 8.4 with `utf8mb4`, `0001_init` fails at `idx_blobs_locator` (`Specified key was too long; max key length is 3072 bytes`), and `INSERT … RETURNING` — used by every store method — is a syntax error. MySQL support was already non-functional before this change; it is now documented as unsupported (tracked in #52).
 - **SQLite / D1 writes:** the stores pass `Date` parameters, which SQLite drivers cannot bind. Works only if the application adds a serializing plugin. Documented.

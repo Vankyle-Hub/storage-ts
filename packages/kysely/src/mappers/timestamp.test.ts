@@ -3,7 +3,7 @@ import { ensureDate } from "@/mappers/timestamp";
 import { blobRowToModel } from "@/mappers/blob-row.mapper";
 
 describe("ensureDate", () => {
-  it("passes Date objects through (PostgreSQL / MySQL drivers)", () => {
+  it("passes Date objects through (PostgreSQL driver)", () => {
     const date = new Date("2026-01-31T08:00:00.000Z");
     expect(ensureDate(date)).toBe(date);
   });

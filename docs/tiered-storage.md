@@ -201,7 +201,7 @@ Providers that lack a capability report `false`; the move executor falls back pe
 
 ### 2.10 Metadata schema changes
 
-New columns on the blob entity/table (details in §3.2): `tier`, `tier_status`, `tier_changed_at`, `last_accessed_at`, `access_count`, `tier_pinned`. Kysely ships migration `0003_tiering` (`0002` is `0002_timestamptz`) for every database type (`postgres`, `mysql`, `sqlite`), with new time columns created time-zone-aware as described in [migrations.md](migrations.md#adding-future-migrations); Cosmos updates its blob mapper (schemaless, no migration op). Indexes: `(tier, last_accessed_at)` for candidate scans; `tier_status` for crash recovery.
+New columns on the blob entity/table (details in §3.2): `tier`, `tier_status`, `tier_changed_at`, `last_accessed_at`, `access_count`, `tier_pinned`. Kysely ships migration `0003_tiering` (`0002` is `0002_timestamptz`) for both database types (`postgres`, `sqlite`), with new time columns created time-zone-aware as described in [migrations.md](migrations.md#adding-future-migrations); Cosmos updates its blob mapper (schemaless, no migration op). Indexes: `(tier, last_accessed_at)` for candidate scans; `tier_status` for crash recovery.
 
 `IBlobStore` gains two queries (§3.3); `updateBlob` gains the ability to write tracking fields without bumping `updatedAt`.
 

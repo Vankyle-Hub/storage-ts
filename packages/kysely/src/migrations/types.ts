@@ -5,12 +5,15 @@ import { ValidationError } from "@vankyle/storage-shared";
  * The database family a migration is generated for.
  *
  * - `"postgres"` — PostgreSQL.
- * - `"mysql"` — MySQL. Until 0.5.0 MySQL was covered by `"postgres"`; it has
- *   its own value because the two diverge from migration 0002 onwards
- *   (PostgreSQL has `timestamptz`, MySQL does not).
  * - `"sqlite"` — SQLite and Cloudflare D1.
+ *
+ * MySQL and SQL Server are not supported. Up to 0.4.x the documentation
+ * placed them under `"postgres"`, but neither the schema nor the stores work
+ * there (index key length and `RETURNING` on MySQL, `timestamp` being
+ * rowversion on SQL Server). They need a schema and store implementation of
+ * their own before a database type is added for them.
  */
-export type DatabaseType = "postgres" | "mysql" | "sqlite";
+export type DatabaseType = "postgres" | "sqlite";
 
 export interface MigrationOptions {
   /**
@@ -63,9 +66,8 @@ export interface ColumnTypeMap {
 }
 
 /**
- * Column types used by migration 0001. These are frozen: 0001 has shipped,
- * so `"mysql"` keeps the exact types it received while it was still covered
- * by `"postgres"`. Later migrations change types with their own statements.
+ * Column types used by migration 0001. These are frozen: 0001 has shipped.
+ * Later migrations change types with their own statements.
  */
 export function getColumnTypes(dbType: DatabaseType): ColumnTypeMap {
   if (dbType === "sqlite") {

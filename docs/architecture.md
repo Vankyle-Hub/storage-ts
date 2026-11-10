@@ -92,16 +92,15 @@ Adapters for the Cloudflare Workers runtime:
 
 `IMetadataStore` implementation powered by [Kysely](https://kysely.dev/):
 
-- Works with PostgreSQL, SQLite, and Cloudflare D1 (via `D1Dialect`); MySQL has its own migration type but known gaps — see [migrations.md](migrations.md#databasetype)
+- Works with PostgreSQL, SQLite, and Cloudflare D1 (via `D1Dialect`). MySQL and SQL Server are not supported — see [migrations.md](migrations.md#unsupported-databases)
 - Contains table schema types (`StorageDatabase`), row mappers, and Kysely query implementations for all six stores
 - Provides database-type-aware migration factories via `createMigrations(dbType, options?)` and `createMigrationProvider(dbType, options?)`
   - `'postgres'` — `varchar(n)`, `bigint`; time columns are `timestamptz` (after `0002_timestamptz`)
-  - `'mysql'` — `varchar(n)`, `bigint`, `timestamp` (stored by MySQL as a UTC instant)
   - `'sqlite'` — `text`, `integer` for SQLite and Cloudflare D1; time columns are ISO-8601 UTC text
 - Provides `generateMigrationSql(key, dbType, options?)` / `generateAllMigrationSql(dbType, options?)` to emit plain SQL strings (useful for generating `wrangler d1 migrations apply` scripts at build time)
 - Shipped migrations are frozen; their SQL is pinned by fixtures and checked in tests
 
-Time values are instants everywhere: the domain models use `Date`, and every metadata backend stores them in a time-zone-unambiguous form (`timestamptz`, MySQL `TIMESTAMP`, ISO-8601 UTC text, Cosmos ISO strings). No stored value depends on the time zone of the process that wrote it.
+Time values are instants everywhere: the domain models use `Date`, and every metadata backend stores them in a time-zone-unambiguous form (`timestamptz`, ISO-8601 UTC text, Cosmos ISO strings). No stored value depends on the time zone of the process that wrote it.
 
 ---
 
@@ -422,7 +421,8 @@ Use `cloudflare` only when you are running inside a Cloudflare Worker and have a
 
 | Scenario | Package |
 |---|---|
-| PostgreSQL, SQLite (MySQL: see [migrations.md](migrations.md#databasetype)) | `kysely` |
+| PostgreSQL, SQLite | `kysely` |
+| MySQL, SQL Server | Not supported ([details](migrations.md#unsupported-databases)) |
 | Cloudflare D1 | `kysely` + `D1Dialect` from `cloudflare` |
 | Azure Cosmos DB | `azure` |
 

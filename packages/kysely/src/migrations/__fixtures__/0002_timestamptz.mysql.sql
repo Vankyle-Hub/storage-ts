@@ -1,1 +1,0 @@
--- 0002_timestamptz: no statements required for mysql

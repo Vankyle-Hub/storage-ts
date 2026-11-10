@@ -51,9 +51,6 @@ const SQLITE_LEGACY_TIMESTAMP_GLOB =
  *   wall-clock times in the time zone of the process that wrote them; they
  *   are converted with `AT TIME ZONE <timestampSourceTimeZone>` (default
  *   `'UTC'`). One `ALTER TABLE` per table, so each table is rewritten once.
- * - **MySQL:** nothing to do. `TIMESTAMP` already stores a UTC instant and
- *   MySQL has no `timestamptz`. The migration is recorded but runs no
- *   statement.
  * - **SQLite / D1:** the columns stay `text`. The canonical format is
  *   ISO-8601 UTC (`2026-01-31T08:00:00.000Z`). Values in the
  *   `CURRENT_TIMESTAMP` format (`2026-01-31 08:00:00`, UTC by SQLite's
@@ -72,7 +69,7 @@ export function createMigration0002(
     async up(db: Kysely<unknown>): Promise<void> {
       if (dbType === "postgres") {
         await alterPostgresTimestamps(db, "timestamptz", timeZone);
-      } else if (dbType === "sqlite") {
+      } else {
         await normalizeSqliteTimestamps(db);
       }
     },
