@@ -45,9 +45,9 @@ The public API for application code. Orchestrates uploads, manages blob and file
 | `getUploadPartUrl` | Returns a presigned URL for a specific part (multipart, client-direct) |
 | `uploadPart` | Proxies a part upload through the server (multipart sessions) |
 | `uploadObject` | Writes the whole object of a single-mode session through the server |
-| `registerPart` | Records a part that the client uploaded directly |
-| `completeUploadSession` | Finalises the upload and creates blob + optional file records |
-| `abortUploadSession` | Cancels the upload and cleans up the provider session |
+| `registerPart` | Records a part that the client uploaded directly; registering a part number again replaces the earlier registration |
+| `completeUploadSession` | Finalises the upload and creates blob + optional file records (once per session) |
+| `abortUploadSession` | Cancels an open upload and cleans up the provider session |
 | `getReadUrl` | Generates a presigned download URL for a file. Optional `responseContentDisposition` and `responseContentType` overrides are forwarded to capable storage adapters. |
 | `getFile` | Fetches a file record by ID |
 | `getBlob` | Fetches a blob record by ID |

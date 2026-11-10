@@ -23,6 +23,10 @@ import {
 } from "@vankyle/storage-core";
 import type { IStorage } from "@vankyle/storage-core";
 import {
+  MetadataConflictError,
+  UploadSessionStateError,
+} from "@vankyle/storage-shared";
+import {
   KyselyMetadataStore,
   createMigrationProvider,
 } from "@vankyle/storage-kysely";
@@ -252,6 +256,149 @@ describe.skipIf(!sqlite)("KyselyMetadataStore on SQLite", () => {
 
     const blob = await metadata.blobs.getBlob("legacy");
     expect(blob?.createdAt.toISOString()).toBe("2026-01-31T08:00:00.000Z");
+  });
+
+  describe("addPart", () => {
+    async function createMultipartSession(id: string) {
+      await metadata.uploads.createSession({
+        id,
+        provider: StorageProvider.S3,
+        bucket: "bucket",
+        objectKey: id,
+        mode: UploadMode.Multipart,
+        providerUploadId: "upload-1",
+      });
+    }
+
+    it("replaces an earlier registration of the same part number", async () => {
+      await createMultipartSession("s1");
+
+      const first = await metadata.uploads.addPart({
+        id: "part-a",
+        sessionId: "s1",
+        partNumber: 1,
+        size: 5,
+        etag: '"first"',
+        checksumSha256: "aa",
+        providerPartId: "p1",
+        providerPartData: { attempt: 1 },
+      });
+      // The retry: a different size and ETag, and no checksum this time.
+      const second = await metadata.uploads.addPart({
+        id: "part-b",
+        sessionId: "s1",
+        partNumber: 1,
+        size: 7,
+        etag: '"second"',
+      });
+
+      expect(second.partNumber).toBe(1);
+      expect(second.size).toBe(7);
+      expect(second.etag).toBe('"second"');
+      // Omitted optional values clear the old ones rather than surviving.
+      expect(second.checksumSha256).toBeUndefined();
+      expect(second.providerPartId).toBeUndefined();
+      expect(second.providerPartData).toBeUndefined();
+      expect(second.uploadedAt.getTime()).toBeGreaterThanOrEqual(first.uploadedAt.getTime());
+
+      const parts = await metadata.uploads.listParts("s1");
+      expect(parts).toHaveLength(1);
+      expect(parts[0]).toEqual(second);
+      expect(await metadata.uploads.getPart("s1", 1)).toEqual(second);
+
+      const raw = database.prepare(`select uploaded_at as v from uploaded_parts`).all() as {
+        v: string;
+      }[];
+      expect(raw).toHaveLength(1);
+      expect(raw[0]!.v).toMatch(ISO_UTC);
+    });
+
+    it("keeps other part numbers and other sessions apart", async () => {
+      await createMultipartSession("s1");
+      await createMultipartSession("s2");
+
+      await metadata.uploads.addPart({ id: "a", sessionId: "s1", partNumber: 2, size: 1, etag: "s1-2" });
+      await metadata.uploads.addPart({ id: "b", sessionId: "s1", partNumber: 1, size: 1, etag: "s1-1" });
+      await metadata.uploads.addPart({ id: "c", sessionId: "s2", partNumber: 1, size: 1, etag: "s2-1" });
+      await metadata.uploads.addPart({ id: "d", sessionId: "s1", partNumber: 1, size: 1, etag: "s1-1b" });
+
+      expect((await metadata.uploads.listParts("s1")).map((p) => [p.partNumber, p.etag])).toEqual([
+        [1, "s1-1b"],
+        [2, "s1-2"],
+      ]);
+      expect((await metadata.uploads.listParts("s2")).map((p) => p.etag)).toEqual(["s2-1"]);
+    });
+
+    it("lets the service register and upload the same part twice", async () => {
+      const service = new DefaultStorageService({
+        storage: fakeStorage(),
+        metadata,
+        bucket: "bucket",
+      });
+      const { session } = await service.createUploadSession({ mode: UploadMode.Multipart });
+
+      await service.registerPart({ sessionId: session.id, partNumber: 1, size: 3, etag: '"a"' });
+      await service.registerPart({ sessionId: session.id, partNumber: 1, size: 3, etag: '"b"' });
+      await service.uploadPart({
+        sessionId: session.id,
+        partNumber: 2,
+        body: new Uint8Array([1, 2, 3]),
+      });
+      await service.uploadPart({
+        sessionId: session.id,
+        partNumber: 2,
+        body: new Uint8Array([1, 2, 3]),
+      });
+
+      const parts = await metadata.uploads.listParts(session.id);
+      expect(parts.map((p) => [p.partNumber, p.etag])).toEqual([
+        [1, '"b"'],
+        [2, '"part"'],
+      ]);
+    });
+  });
+
+  describe("completing a session twice", () => {
+    it("is refused by the service with a typed error and leaves one blob", async () => {
+      const service = new DefaultStorageService({
+        storage: fakeStorage(),
+        metadata,
+        bucket: "bucket",
+      });
+      const { session } = await service.createUploadSession({
+        mode: UploadMode.Single,
+        expectedSize: 3,
+      });
+
+      await service.completeUploadSession({ sessionId: session.id });
+      await expect(
+        service.completeUploadSession({ sessionId: session.id }),
+      ).rejects.toBeInstanceOf(UploadSessionStateError);
+
+      const blobs = database.prepare(`select id from blobs`).all();
+      expect(blobs).toHaveLength(1);
+    });
+
+    it("createBlob reports a taken locator as MetadataConflictError", async () => {
+      const blob = {
+        provider: StorageProvider.S3,
+        bucket: "bucket",
+        objectKey: "same/key",
+        size: 1,
+      };
+      await metadata.blobs.createBlob({ id: "b1", ...blob });
+
+      const error = await metadata.blobs
+        .createBlob({ id: "b2", ...blob })
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(MetadataConflictError);
+      const conflict = error as MetadataConflictError;
+      expect(conflict.code).toBe("METADATA_CONFLICT");
+      expect(conflict.entityType).toBe("Blob");
+      expect(conflict.entityId).toBe("s3/bucket/same/key");
+      expect(conflict.cause).toBeDefined();
+    });
   });
 
   it("fails loudly when forced to bind Date values, as before the fix", async () => {

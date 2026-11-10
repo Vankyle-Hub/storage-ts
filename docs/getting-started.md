@@ -16,6 +16,7 @@ This guide walks through the most common usage patterns. For the full design rat
   - [Multipart — server-proxied parts](#multipart--server-proxied-parts)
 - [Retrieving an upload session](#retrieving-an-upload-session)
 - [Handling upload verification errors](#handling-upload-verification-errors)
+- [Finished and expired sessions](#finished-and-expired-sessions)
 - [Running database migrations](#running-database-migrations)
   - [PostgreSQL / MySQL / SQLite](#postgresql--mysql--sqlite)
   - [Cloudflare D1 — programmatic](#cloudflare-d1--programmatic)
@@ -264,7 +265,7 @@ Things to know:
 - **Content length.** For a `Uint8Array` the byte length is used. For a `ReadableStream`, pass `contentLength`; if you omit it, the session's `expectedSize` is used. Some providers (S3) reject or buffer a stream of unknown length.
 - **Content type** comes from the session's `mimeType`.
 - **Nothing is final until `completeUploadSession`.** `uploadObject` stores the object and moves the session to `in-progress`; it does not create a blob. Calling `uploadObject` again before completing overwrites the object, so a failed write can simply be retried.
-- **Errors.** `uploadObject` throws `ValidationError` with `field: "mode"` for a multipart session (use `uploadPart` there) and with `field: "status"` for a session that is already completed or aborted. Conversely, `uploadPart` and `getUploadPartUrl` throw `ValidationError` with `field: "mode"` for a single-mode session.
+- **Errors.** `uploadObject` throws `ValidationError` with `field: "mode"` for a multipart session (use `uploadPart` there) and `UploadSessionStateError` for a session that is already completed or aborted (see [Finished and expired sessions](#finished-and-expired-sessions)). Conversely, `uploadPart` and `getUploadPartUrl` throw `ValidationError` with `field: "mode"` for a single-mode session.
 
 In a Cloudflare Worker with an R2 binding:
 
@@ -304,11 +305,12 @@ const { session } = await storageService.createUploadSession({
 const signedAccess = await storageService.getUploadPartUrl({
   sessionId: session.id,
   partNumber: 1,
-  expiresInSeconds: 3600,
 });
 
 // Send signedAccess.url to the client for part 1
 ```
+
+The URL is valid for `defaultUploadExpiresInSeconds`, but never longer than the session itself has left.
 
 **Step 3 — Client: upload each part**
 
@@ -332,6 +334,8 @@ await storageService.registerPart({
   etag: etag,
 });
 ```
+
+If a part upload fails, let the client upload that part again and register it again with the same `partNumber`: the new registration replaces the old one.
 
 **Step 5 — Backend: complete**
 
@@ -419,6 +423,41 @@ try {
 ```
 
 `actual` is `undefined` when the provider reported no size or ETag. Because nothing has been written yet, the session is still open after either error: let the client upload again and call `completeUploadSession` once more, or call `abortUploadSession`. If your code runs across package or bundle boundaries where `instanceof` is unreliable, branch on `error.code` instead.
+
+---
+
+## Finished and expired sessions
+
+An upload session accepts data until it is completed, aborted, or past its `expiresAt` (set from `expiresInSeconds` at creation, or `defaultUploadExpiresInSeconds`). After that, `getUploadPartUrl`, `uploadPart`, `uploadObject`, `registerPart` and `completeUploadSession` all refuse it, before touching the provider or the database:
+
+| Error | `code` | Raised when |
+|---|---|---|
+| `UploadSessionStateError` | `UPLOAD_SESSION_INVALID_STATE` | The session is `completed` or `aborted` (`error.status` says which, `error.operation` names the call) |
+| `UploadSessionExpiredError` | `UPLOAD_SESSION_EXPIRED` | The session is still open but `error.expiresAt` has passed |
+
+```typescript
+import {
+  UploadSessionStateError,
+  UploadSessionExpiredError,
+} from "@vankyle/storage-shared";
+
+try {
+  await storageService.completeUploadSession({ sessionId });
+} catch (error) {
+  if (error instanceof UploadSessionStateError) {
+    // Already completed (a duplicate request) or aborted.
+    return reply.status(409).send({ code: error.code, status: error.status });
+  }
+  if (error instanceof UploadSessionExpiredError) {
+    // Too late: clean up and have the client start a new session.
+    await storageService.abortUploadSession(sessionId);
+    return reply.status(410).send({ code: error.code });
+  }
+  throw error;
+}
+```
+
+A session can be completed once; a second `completeUploadSession` gets `UploadSessionStateError` with `status: "completed"`. `abortUploadSession` works on any open session, including an expired one, does nothing if the session is already aborted, and throws `UploadSessionStateError` for a completed session. Expiry is checked when you call the service — nothing marks or removes expired sessions in the background.
 
 ---
 

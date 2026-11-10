@@ -4,12 +4,30 @@
 
 ### Breaking changes
 
+- **Finished and expired upload sessions are refused.** `getUploadPartUrl`,
+  `uploadPart`, `uploadObject`, `registerPart` and `completeUploadSession`
+  throw `UploadSessionStateError` for a completed or aborted session and
+  `UploadSessionExpiredError` once the session's `expiresAt` has passed.
+  Before, only `uploadObject` checked the status and `expiresAt` was never
+  enforced. (#61)
+- **`uploadObject` on a completed or aborted session throws
+  `UploadSessionStateError`** instead of `ValidationError`
+  (`field: "status"`). (#61)
+- **`abortUploadSession` on a completed session throws
+  `UploadSessionStateError`** instead of relabelling the session as aborted.
+  Aborting an already aborted session does nothing. (#61)
+- **`IUploadSessionStore.addPart` must replace an existing part with the same
+  part number.** Custom metadata stores need to implement this. (#62)
 - **`createUploadSession` rejects an `expectedSize` that is not a
   non-negative integer** with `ValidationError` (`field: "expectedSize"`).
   (#63)
 
 ### Added
 
+- `UploadSessionStateError` (`UPLOAD_SESSION_INVALID_STATE`; `sessionId`,
+  `status`, `operation`) and `UploadSessionExpiredError`
+  (`UPLOAD_SESSION_EXPIRED`; `sessionId`, `expiresAt`) in
+  `@vankyle/storage-shared`. (#61)
 - **Size-bound presigned upload URLs.** `CreatePutUrlInput` and
   `CreateUploadPartUrlInput` take an optional `contentLength`, and
   `GetUploadPartUrlRequest` takes an optional `contentLength` for the part.
@@ -20,6 +38,20 @@
   (Azure SAS) ignore it; `completeUploadSession` still verifies the size.
   (#63)
 - `StorageCapabilities.signedContentLength` — `true` on `S3Storage`. (#63)
+
+### Fixed
+
+- Completing a session twice failed with a raw unique-index error from the
+  database; it is now refused with `UploadSessionStateError` before anything
+  is written. (#61)
+- `KyselyBlobStore.createBlob` reports a blob locator that is already taken
+  as `MetadataConflictError` instead of a raw driver error. (#61)
+- Presigned part URLs from `getUploadPartUrl` no longer outlive their
+  session: the lifetime is capped at the time the session has left. (#61)
+- Registering or uploading the same part number again replaces the earlier
+  part. The Kysely store failed on the `(session_id, part_number)` unique
+  index; the Cosmos store silently kept both and passed duplicates to the
+  provider on completion. (#62)
 
 ## 0.5.0
 

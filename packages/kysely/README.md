@@ -66,6 +66,8 @@ Six tables are created by the included migrations:
 | `idx_blobs_sha256` | `sha256` | Non-unique |
 | `idx_blobs_locator` | `(provider, bucket, object_key)` | Unique |
 
+The two unique indexes carry behavior: `addPart` upserts on `idx_uploaded_parts_session`, so registering a part number again replaces the earlier part; and `createBlob` throws `MetadataConflictError` when `idx_blobs_locator` is violated (a second blob for the same object).
+
 ## Running migrations
 
 `@vankyle/storage-kysely` exports `createMigrationProvider(dbType, options?)` for the [Kysely `Migrator`](https://kysely.dev/docs/migrations). `dbType` is `"postgres"`, `"mysql"`, or `"sqlite"` (SQLite and D1):

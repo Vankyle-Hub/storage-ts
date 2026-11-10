@@ -10,7 +10,11 @@ import {
 import { MetadataError } from "@vankyle/storage-shared";
 import { KyselyMetadataStore } from "@vankyle/storage-kysely";
 import type { StorageDatabase } from "@vankyle/storage-kysely";
-import { StoreDialect, detectDatabaseType } from "@/metadata/store-dialect";
+import {
+  StoreDialect,
+  detectDatabaseType,
+  isUniqueViolation,
+} from "@/metadata/store-dialect";
 import { computeLocatorHash } from "@/metadata/locator-hash";
 
 /** A Kysely instance on the MySQL adapter whose driver answers from `respond`. */
@@ -202,5 +206,29 @@ describe("computeLocatorHash", () => {
       ["Key", "key", "key "].map((key) => computeLocatorHash("s3", "bucket", key)),
     );
     expect(new Set(hashes).size).toBe(3);
+  });
+});
+
+describe("isUniqueViolation", () => {
+  it.each([
+    ["pg SQLSTATE 23505", { code: "23505" }],
+    ["mysql2 ER_DUP_ENTRY", { code: "ER_DUP_ENTRY", errno: 1062 }],
+    ["mysql2 errno only", { errno: 1062 }],
+    ["better-sqlite3 unique", { code: "SQLITE_CONSTRAINT_UNIQUE" }],
+    ["better-sqlite3 primary key", { code: "SQLITE_CONSTRAINT_PRIMARYKEY" }],
+    ["node:sqlite errcode", { code: "ERR_SQLITE_ERROR", errcode: 2067 }],
+    ["D1 message", new Error("D1_ERROR: UNIQUE constraint failed: blobs.provider")],
+  ])("recognises %s", (_name, error) => {
+    expect(isUniqueViolation(error)).toBe(true);
+  });
+
+  it.each([
+    ["a foreign key violation", { code: "23503" }],
+    ["a not-null violation", { code: "SQLITE_CONSTRAINT_NOTNULL", errcode: 1299 }],
+    ["a connection error", new Error("connection refused")],
+    ["a string", "UNIQUE constraint failed"],
+    ["undefined", undefined],
+  ])("rejects %s", (_name, error) => {
+    expect(isUniqueViolation(error)).toBe(false);
   });
 });

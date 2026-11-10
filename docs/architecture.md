@@ -308,7 +308,7 @@ interface IUploadSessionStore {
   createSession(input): Promise<UploadSession>;
   getSession(id): Promise<UploadSession | undefined>;
   updateSession(id, input): Promise<UploadSession>;
-  addPart(input): Promise<UploadedPart>;
+  addPart(input): Promise<UploadedPart>;   // replaces a part with the same partNumber
   getPart(sessionId, partNumber): Promise<UploadedPart | undefined>;
   listParts(sessionId): Promise<UploadedPart[]>;
 }
@@ -396,6 +396,22 @@ completeUploadSession
   └─ updateSession (status = completed)
 ```
 
+### Session lifecycle rules
+
+A session is open while its status is `pending` or `in-progress` and its `expiresAt` (if any) has not passed. Every operation that writes to a session — `getUploadPartUrl`, `uploadPart`, `uploadObject`, `registerPart`, `completeUploadSession` — requires an open session:
+
+| Session | Result |
+|---|---|
+| `completed` or `aborted` | `UploadSessionStateError` |
+| open, `expiresAt <= now` | `UploadSessionExpiredError` |
+
+- Checks run in the order: session exists → capability → mode → status → expiry, and always before any provider call or metadata write.
+- Expiry is evaluated when the operation is called. It is not a stored status, and a session without `expiresAt` never expires.
+- A session is completed at most once. If two `completeUploadSession` calls race past the status check, the blob's unique locator decides: the loser gets `MetadataConflictError` from the Kysely store.
+- `abortUploadSession` aborts any open session, expired ones included (that is how they are cleaned up); it does nothing for an already aborted session and throws `UploadSessionStateError` for a completed one.
+- A presigned part URL is valid for `defaultUploadExpiresInSeconds`, capped at the time the session has left.
+- Parts are keyed by part number within a session. Registering or uploading a part number again replaces the earlier part (`IUploadSessionStore.addPart`), because clients retry failed parts; `listParts` returns one part per part number.
+
 ### Object key policy
 
 `DefaultObjectKeyPolicy` generates deterministic object keys:
@@ -462,6 +478,8 @@ All errors extend `BaseError` from `packages/shared`. Provider adapters are resp
 | `MetadataNotFoundError` | `METADATA_NOT_FOUND` | Entity not found (`entityType`, `entityId`) |
 | `MetadataConflictError` | `METADATA_CONFLICT` | Uniqueness constraint violation |
 | `ValidationError` | `VALIDATION_ERROR` | Schema or input validation failure |
+| `UploadSessionStateError` | `UPLOAD_SESSION_INVALID_STATE` | A session operation on a completed or aborted session (`sessionId`, `status`, `operation`) |
+| `UploadSessionExpiredError` | `UPLOAD_SESSION_EXPIRED` | A session operation after the session's `expiresAt` (`sessionId`, `expiresAt`) |
 | `UploadSizeMismatchError` | `UPLOAD_SIZE_MISMATCH` | `completeUploadSession`: stored size differs from the session's `expectedSize` (`sessionId`, `expected`, `actual`) |
 | `UploadEtagMismatchError` | `UPLOAD_ETAG_MISMATCH` | `completeUploadSession`: stored ETag differs from the ETag passed by the caller (`sessionId`, `expected`, `actual`) |
 

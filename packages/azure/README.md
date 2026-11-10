@@ -83,6 +83,8 @@ Each document type uses a synthetic `pk` value that co-locates parent and child 
 
 This design ensures that the most frequent queries (`listVersions`, `listParts`, `listReferences`) are single-partition operations.
 
+An `uploaded-part` document has the id `<sessionId>:<partNumber>`, so registering a part number again upserts the same document and replaces the earlier registration. Versions up to 0.5.0 gave each registration a random id; if such duplicates exist for a part number, `listParts` and `getPart` return only the most recent one.
+
 #### Creating the container manually
 
 If you need to create and pass in a `Container` object yourself:
