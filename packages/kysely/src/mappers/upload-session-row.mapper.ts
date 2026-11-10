@@ -5,6 +5,7 @@ import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { UploadSessionsTable } from "@/schema/database";
 import { ensureDate } from "@/mappers/timestamp";
+import { ensureOptionalNumber } from "@/mappers/number";
 
 type UploadSessionRow = Selectable<UploadSessionsTable>;
 
@@ -18,7 +19,7 @@ export function uploadSessionRowToModel(row: UploadSessionRow): UploadSession {
     status: row.status as UploadSessionStatus,
     fileName: row.file_name ?? undefined,
     mimeType: row.mime_type ?? undefined,
-    expectedSize: row.expected_size ?? undefined,
+    expectedSize: ensureOptionalNumber(row.expected_size),
     expectedSha256: row.expected_sha256 ?? undefined,
     providerUploadId: row.provider_upload_id ?? undefined,
     providerSessionData: parseJson(row.provider_session_data),

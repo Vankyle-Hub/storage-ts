@@ -146,7 +146,7 @@ export default {
 Run migrations from `@vankyle/storage-kysely` using the Kysely `Migrator` with `D1Dialect`. The SQL is compatible with SQLite, which D1 is based on.
 
 ```typescript
-import { Migrator } from "kysely";
+import { Migrator } from "kysely/migration";
 import { migrations } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({

@@ -10,40 +10,44 @@ import { UploadSessionStatus } from "@vankyle/storage-core";
 import type { StorageDatabase } from "@/schema/database";
 import { uploadSessionRowToModel } from "@/mappers/upload-session-row.mapper";
 import { uploadedPartRowToModel } from "@/mappers/uploaded-part-row.mapper";
+import { StoreDialect, type KyselyStoreOptions } from "@/metadata/store-dialect";
 
 export class KyselyUploadSessionStore implements IUploadSessionStore {
-  constructor(private readonly db: Kysely<StorageDatabase>) {}
+  private readonly dialect: StoreDialect;
+
+  constructor(
+    private readonly db: Kysely<StorageDatabase>,
+    options?: KyselyStoreOptions,
+  ) {
+    this.dialect = new StoreDialect(db, options);
+  }
 
   async createSession(input: CreateUploadSessionInput): Promise<UploadSession> {
-    const now = new Date();
-    const row = await this.db
-      .insertInto("upload_sessions")
-      .values({
-        id: input.id,
-        provider: input.provider,
-        bucket: input.bucket,
-        object_key: input.objectKey,
-        mode: input.mode,
-        status: UploadSessionStatus.Pending,
-        file_name: input.fileName ?? null,
-        mime_type: input.mimeType ?? null,
-        expected_size: input.expectedSize ?? null,
-        expected_sha256: input.expectedSha256 ?? null,
-        provider_upload_id: input.providerUploadId ?? null,
-        provider_session_data: input.providerSessionData
-          ? JSON.stringify(input.providerSessionData)
-          : null,
-        created_by: input.createdBy ?? null,
-        owner_id: input.ownerId ?? null,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-        created_at: now,
-        updated_at: now,
-        expires_at: input.expiresAt ?? null,
-        completed_at: null,
-        aborted_at: null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const now = this.dialect.timestamp(new Date());
+    const row = await this.dialect.insertRow(this.db, "upload_sessions", {
+      id: input.id,
+      provider: input.provider,
+      bucket: input.bucket,
+      object_key: input.objectKey,
+      mode: input.mode,
+      status: UploadSessionStatus.Pending,
+      file_name: input.fileName ?? null,
+      mime_type: input.mimeType ?? null,
+      expected_size: input.expectedSize ?? null,
+      expected_sha256: input.expectedSha256 ?? null,
+      provider_upload_id: input.providerUploadId ?? null,
+      provider_session_data: input.providerSessionData
+        ? JSON.stringify(input.providerSessionData)
+        : null,
+      created_by: input.createdBy ?? null,
+      owner_id: input.ownerId ?? null,
+      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      created_at: now,
+      updated_at: now,
+      expires_at: this.dialect.timestampOrNull(input.expiresAt),
+      completed_at: null,
+      aborted_at: null,
+    });
 
     return uploadSessionRowToModel(row);
   }
@@ -63,7 +67,7 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
     input: UpdateUploadSessionInput,
   ): Promise<UploadSession> {
     const updates: Record<string, unknown> = {
-      updated_at: new Date(),
+      updated_at: this.dialect.timestamp(new Date()),
     };
 
     if (input.status !== undefined) updates.status = input.status;
@@ -71,37 +75,35 @@ export class KyselyUploadSessionStore implements IUploadSessionStore {
       updates.provider_upload_id = input.providerUploadId;
     if (input.providerSessionData !== undefined)
       updates.provider_session_data = JSON.stringify(input.providerSessionData);
-    if (input.completedAt !== undefined) updates.completed_at = input.completedAt;
-    if (input.abortedAt !== undefined) updates.aborted_at = input.abortedAt;
+    if (input.completedAt !== undefined)
+      updates.completed_at = this.dialect.timestamp(input.completedAt);
+    if (input.abortedAt !== undefined)
+      updates.aborted_at = this.dialect.timestamp(input.abortedAt);
 
-    const row = await this.db
-      .updateTable("upload_sessions")
-      .set(updates)
-      .where("id", "=", id)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const row = await this.dialect.updateRowById(
+      this.db,
+      "upload_sessions",
+      id,
+      updates,
+    );
 
     return uploadSessionRowToModel(row);
   }
 
   async addPart(input: CreateUploadedPartInput): Promise<UploadedPart> {
-    const row = await this.db
-      .insertInto("uploaded_parts")
-      .values({
-        id: input.id,
-        session_id: input.sessionId,
-        part_number: input.partNumber,
-        size: input.size,
-        etag: input.etag ?? null,
-        checksum_sha256: input.checksumSha256 ?? null,
-        provider_part_id: input.providerPartId ?? null,
-        provider_part_data: input.providerPartData
-          ? JSON.stringify(input.providerPartData)
-          : null,
-        uploaded_at: new Date(),
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const row = await this.dialect.insertRow(this.db, "uploaded_parts", {
+      id: input.id,
+      session_id: input.sessionId,
+      part_number: input.partNumber,
+      size: input.size,
+      etag: input.etag ?? null,
+      checksum_sha256: input.checksumSha256 ?? null,
+      provider_part_id: input.providerPartId ?? null,
+      provider_part_data: input.providerPartData
+        ? JSON.stringify(input.providerPartData)
+        : null,
+      uploaded_at: this.dialect.timestamp(new Date()),
+    });
 
     return uploadedPartRowToModel(row);
   }

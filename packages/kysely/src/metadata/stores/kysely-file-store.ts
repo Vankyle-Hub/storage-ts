@@ -10,30 +10,34 @@ import { FileStatus } from "@vankyle/storage-core";
 import type { StorageDatabase } from "@/schema/database";
 import { fileRowToModel } from "@/mappers/file-row.mapper";
 import { fileVersionRowToModel } from "@/mappers/file-version-row.mapper";
+import { StoreDialect, type KyselyStoreOptions } from "@/metadata/store-dialect";
 
 export class KyselyFileStore implements IFileStore {
-  constructor(private readonly db: Kysely<StorageDatabase>) {}
+  private readonly dialect: StoreDialect;
+
+  constructor(
+    private readonly db: Kysely<StorageDatabase>,
+    options?: KyselyStoreOptions,
+  ) {
+    this.dialect = new StoreDialect(db, options);
+  }
 
   async createFile(input: CreateFileInput): Promise<File> {
-    const now = new Date();
-    const row = await this.db
-      .insertInto("files")
-      .values({
-        id: input.id,
-        owner_id: input.ownerId ?? null,
-        display_name: input.displayName,
-        mime_type: input.mimeType ?? null,
-        current_version_id: null,
-        size: input.size ?? null,
-        parent_id: input.parentId ?? null,
-        status: FileStatus.Active,
-        created_at: now,
-        updated_at: now,
-        deleted_at: null,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const now = this.dialect.timestamp(new Date());
+    const row = await this.dialect.insertRow(this.db, "files", {
+      id: input.id,
+      owner_id: input.ownerId ?? null,
+      display_name: input.displayName,
+      mime_type: input.mimeType ?? null,
+      current_version_id: null,
+      size: input.size ?? null,
+      parent_id: input.parentId ?? null,
+      status: FileStatus.Active,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    });
 
     return fileRowToModel(row);
   }
@@ -50,7 +54,7 @@ export class KyselyFileStore implements IFileStore {
 
   async updateFile(id: string, input: UpdateFileInput): Promise<File> {
     const updates: Record<string, unknown> = {
-      updated_at: new Date(),
+      updated_at: this.dialect.timestamp(new Date()),
     };
 
     if (input.displayName !== undefined) updates.display_name = input.displayName;
@@ -59,37 +63,29 @@ export class KyselyFileStore implements IFileStore {
     if (input.size !== undefined) updates.size = input.size;
     if (input.mimeType !== undefined) updates.mime_type = input.mimeType;
     if (input.status !== undefined) updates.status = input.status;
-    if (input.deletedAt !== undefined) updates.deleted_at = input.deletedAt;
+    if (input.deletedAt !== undefined)
+      updates.deleted_at = this.dialect.timestamp(input.deletedAt);
     if (input.metadata !== undefined)
       updates.metadata = JSON.stringify(input.metadata);
 
-    const row = await this.db
-      .updateTable("files")
-      .set(updates)
-      .where("id", "=", id)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const row = await this.dialect.updateRowById(this.db, "files", id, updates);
 
     return fileRowToModel(row);
   }
 
   async createVersion(input: CreateFileVersionInput): Promise<FileVersion> {
-    const row = await this.db
-      .insertInto("file_versions")
-      .values({
-        id: input.id,
-        file_id: input.fileId,
-        blob_id: input.blobId,
-        version: input.version,
-        size: input.size,
-        mime_type: input.mimeType ?? null,
-        sha256: input.sha256 ?? null,
-        created_at: new Date(),
-        created_by: input.createdBy ?? null,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const row = await this.dialect.insertRow(this.db, "file_versions", {
+      id: input.id,
+      file_id: input.fileId,
+      blob_id: input.blobId,
+      version: input.version,
+      size: input.size,
+      mime_type: input.mimeType ?? null,
+      sha256: input.sha256 ?? null,
+      created_at: this.dialect.timestamp(new Date()),
+      created_by: input.createdBy ?? null,
+      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    });
 
     return fileVersionRowToModel(row);
   }

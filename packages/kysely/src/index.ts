@@ -1,4 +1,5 @@
 export { KyselyMetadataStore } from "@/metadata/index";
+export type { KyselyStoreOptions } from "@/metadata/index";
 export {
   KyselyUploadSessionStore,
   KyselyBlobStore,
