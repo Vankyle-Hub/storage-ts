@@ -22,8 +22,8 @@ function fixture(name: string): string {
 }
 
 describe("migration registry", () => {
-  it.each(DATABASE_TYPES)("lists 0001 then 0002 for %s", (dbType) => {
-    expect(Object.keys(createMigrations(dbType))).toEqual([
+  it.each(DATABASE_TYPES)("lists 0001 then 0002 first for %s", (dbType) => {
+    expect(Object.keys(createMigrations(dbType)).slice(0, 2)).toEqual([
       "0001_init",
       "0002_timestamptz",
     ]);
@@ -31,7 +31,7 @@ describe("migration registry", () => {
 
   it("exposes the same migrations through the provider", async () => {
     const migrations = await createMigrationProvider("postgres").getMigrations();
-    expect(Object.keys(migrations)).toEqual(["0001_init", "0002_timestamptz"]);
+    expect(Object.keys(migrations).slice(0, 2)).toEqual(["0001_init", "0002_timestamptz"]);
   });
 });
 
@@ -92,7 +92,7 @@ describe("0002_timestamptz on postgres", () => {
     const all = await generateAllMigrationSql("postgres", {
       timestampSourceTimeZone: "+08:00",
     });
-    expect(Object.keys(all)).toEqual(["0001_init", "0002_timestamptz"]);
+    expect(Object.keys(all).slice(0, 2)).toEqual(["0001_init", "0002_timestamptz"]);
     expect(all["0002_timestamptz"]).toContain("at time zone '+08:00'");
   });
 

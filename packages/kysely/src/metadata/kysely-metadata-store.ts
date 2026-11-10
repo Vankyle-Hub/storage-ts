@@ -26,6 +26,6 @@ export class KyselyMetadataStore implements IMetadataStore {
     this.uploads = new KyselyUploadSessionStore(db, resolved);
     this.blobs = new KyselyBlobStore(db, resolved);
     this.files = new KyselyFileStore(db, resolved);
-    this.tags = new KyselyTagStore(db);
+    this.tags = new KyselyTagStore(db, resolved);
   }
 }

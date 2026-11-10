@@ -27,7 +27,7 @@ Let each user (owner) create their own tags, attach them to files they own, and 
 
 - Tag lifecycle: create (idempotent), list per owner, delete (idempotent, cascading associations).
 - File/tag associations: add (get-or-create), remove (idempotent), list a file's tags, list files by tag.
-- Metadata adapters: Kysely (migration `0002_add_tags`, postgres + sqlite/D1 flavors) and Cosmos DB.
+- Metadata adapters: Kysely (migration `0003_add_tags`, postgres + sqlite/D1 flavors) and Cosmos DB.
 - Filtering of soft-deleted files from all tag-based listings.
 
 **Explicitly out of scope (v1):**
@@ -91,7 +91,7 @@ Recorded constraint: if a hard-delete capability is introduced later, its contra
 
 ### 2.6 Persistence
 
-**Kysely — migration `0002_add_tags`:**
+**Kysely — migration `0003_add_tags`:**
 
 - `tags(id PK, owner_id, name varchar(128), normalized_name varchar(128), created_at, updated_at, metadata text)`
 - `file_tags(file_id, tag_id, owner_id, created_at)` — no surrogate PK, no FK constraints (ownership of integrity sits in the service layer).
@@ -245,7 +245,7 @@ Each criterion is independently verifiable. Status legend: ✅ implemented & tes
 | G2 | Kysely `createTag` resolves unique conflicts to the existing tag (no DB error escapes) | ❌ untested |
 | G3 | Cosmos `createTag` resolves 409 conflicts by reading back the existing document | ❌ untested |
 | G4 | Both adapters' `deleteTag` delete associations before the tag | 🔶 implemented, untested |
-| G5 | Migration `0002` creates both tables and all indexes for postgres + sqlite flavors and is rollback-complete | 🔶 DDL assertions only |
+| G5 | Migration `0003` creates both tables and all indexes for postgres + sqlite flavors and is rollback-complete | 🔶 DDL assertions only |
 
 **H. Engineering and integration**
 
@@ -260,7 +260,7 @@ Each criterion is independently verifiable. Status legend: ✅ implemented & tes
 
 | ID | Criterion | Status |
 | --- | --- | --- |
-| I1 | `docs/migrations.md` "future migration" example rewritten — its current `0002_add_tags` sketch contradicts the shipped two-table design | ❌ |
+| I1 | `docs/migrations.md` "future migration" example rewritten — its current `0003_add_tags` sketch contradicts the shipped two-table design | ❌ |
 | I2 | `docs/architecture.md` and `docs/getting-started.md` document tags (domain model + usage example) | ❌ |
 | I3 | `CHANGELOG.md` records the feature; semver-minor bump | ❌ |
 | I4 | `AGENTS.md` `IMetadataStore` composition description includes `tags` | ❌ |
@@ -278,7 +278,7 @@ Each criterion is independently verifiable. Status legend: ✅ implemented & tes
 
 ### Phase 1 — Landed (superseded draft PR #28)
 
-Core models/schemas/ports, service operations, Kysely store + migration `0002_add_tags`, Cosmos store + doc mapper, service-level unit tests. Verification: typecheck + 141 tests green.
+Core models/schemas/ports, service operations, Kysely store + migration `0003_add_tags`, Cosmos store + doc mapper, service-level unit tests. Verification: typecheck + 141 tests green.
 
 ### Phase 2 — Correctness fixes (criteria B2/B4, D2, F2)
 
@@ -293,7 +293,7 @@ Core models/schemas/ports, service operations, Kysely store + migration `0002_ad
 
 ### Phase 4 — Documentation and release (criteria I1–I4)
 
-1. Rewrite the `0002_add_tags` example in `docs/migrations.md` to match the shipped design; tags sections in `docs/architecture.md` / `docs/getting-started.md`; `AGENTS.md` composition fix.
+1. Rewrite the `0003_add_tags` example in `docs/migrations.md` to match the shipped design; tags sections in `docs/architecture.md` / `docs/getting-started.md`; `AGENTS.md` composition fix.
 2. `CHANGELOG.md` entry; semver-minor bump; PR to Ready with verification evidence for the full head SHA.
 
 ### Pitfalls

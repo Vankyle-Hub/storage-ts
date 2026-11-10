@@ -11,30 +11,36 @@ import { generateId, normalizeTagName } from "@vankyle/storage-core";
 import type { StorageDatabase } from "@/schema/database";
 import { fileRowToModel } from "@/mappers/file-row.mapper";
 import { fileTagRowToModel, tagRowToModel } from "@/mappers/tag-row.mapper";
+import { StoreDialect, type KyselyStoreOptions } from "@/metadata/store-dialect";
 
 export class KyselyTagStore implements ITagStore {
-  constructor(private readonly db: Kysely<StorageDatabase>) {}
+  private readonly dialect: StoreDialect;
+
+  constructor(
+    private readonly db: Kysely<StorageDatabase>,
+    options?: KyselyStoreOptions,
+  ) {
+    this.dialect = new StoreDialect(db, options);
+  }
 
   async createTag(input: CreateTagInput): Promise<Tag> {
-    const now = new Date();
-    const row = await this.db
-      .insertInto("tags")
-      .values({
-        id: input.id ?? generateId(),
-        owner_id: input.ownerId,
-        name: input.name,
-        normalized_name: input.normalizedName ?? normalizeTagName(input.name),
-        created_at: now,
-        updated_at: now,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    await this.dialect.ensureReady(this.db);
+    const now = this.dialect.timestamp(new Date());
+    const row = await this.dialect.insertRow(this.db, "tags", {
+      id: input.id ?? generateId(),
+      owner_id: input.ownerId,
+      name: input.name,
+      normalized_name: input.normalizedName ?? normalizeTagName(input.name),
+      created_at: now,
+      updated_at: now,
+      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    });
 
     return tagRowToModel(row);
   }
 
   async getTag(id: string): Promise<Tag | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("tags")
       .selectAll()
@@ -45,6 +51,7 @@ export class KyselyTagStore implements ITagStore {
   }
 
   async getTagByName(ownerId: string, name: string): Promise<Tag | undefined> {
+    await this.dialect.ensureReady(this.db);
     const row = await this.db
       .selectFrom("tags")
       .selectAll()
@@ -56,6 +63,7 @@ export class KyselyTagStore implements ITagStore {
   }
 
   async listTags(ownerId: string): Promise<Tag[]> {
+    await this.dialect.ensureReady(this.db);
     const rows = await this.db
       .selectFrom("tags")
       .selectAll()
@@ -67,33 +75,36 @@ export class KyselyTagStore implements ITagStore {
   }
 
   async deleteTag(id: string): Promise<void> {
+    await this.dialect.ensureReady(this.db);
     await this.db.deleteFrom("file_tags").where("tag_id", "=", id).execute();
     await this.db.deleteFrom("tags").where("id", "=", id).execute();
   }
 
   async addTagToFile(input: CreateFileTagInput): Promise<FileTag> {
-    const existing = await this.db
-      .selectFrom("file_tags")
-      .selectAll()
-      .where("owner_id", "=", input.ownerId)
-      .where("file_id", "=", input.fileId)
-      .where("tag_id", "=", input.tagId)
-      .executeTakeFirst();
+    await this.dialect.ensureReady(this.db);
+    const existing = await this.findFileTag(input);
+    if (existing) return existing;
 
-    if (existing) return fileTagRowToModel(existing);
-
-    const row = await this.db
+    // file_tags has no id column, so the row is read back by its natural key
+    // rather than through StoreDialect.insertRow. This also avoids RETURNING,
+    // which MySQL does not support.
+    await this.db
       .insertInto("file_tags")
       .values({
         owner_id: input.ownerId,
         file_id: input.fileId,
         tag_id: input.tagId,
-        created_at: new Date(),
+        created_at: this.dialect.timestamp(new Date()),
       })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+      .execute();
 
-    return fileTagRowToModel(row);
+    const created = await this.findFileTag(input);
+    if (!created) {
+      throw new Error(
+        `file_tags row not found after insert: ${input.fileId}/${input.tagId}`,
+      );
+    }
+    return created;
   }
 
   async removeTagFromFile(
@@ -101,6 +112,7 @@ export class KyselyTagStore implements ITagStore {
     fileId: string,
     tagId: string,
   ): Promise<void> {
+    await this.dialect.ensureReady(this.db);
     await this.db
       .deleteFrom("file_tags")
       .where("owner_id", "=", ownerId)
@@ -110,6 +122,7 @@ export class KyselyTagStore implements ITagStore {
   }
 
   async listTagsForFile(ownerId: string, fileId: string): Promise<Tag[]> {
+    await this.dialect.ensureReady(this.db);
     const rows = await this.db
       .selectFrom("tags")
       .innerJoin("file_tags", "file_tags.tag_id", "tags.id")
@@ -123,6 +136,7 @@ export class KyselyTagStore implements ITagStore {
   }
 
   async listFilesByTag(ownerId: string, tagId: string): Promise<File[]> {
+    await this.dialect.ensureReady(this.db);
     const rows = await this.db
       .selectFrom("files")
       .innerJoin("file_tags", "file_tags.file_id", "files.id")
@@ -133,5 +147,19 @@ export class KyselyTagStore implements ITagStore {
       .execute();
 
     return rows.map(fileRowToModel);
+  }
+
+  private async findFileTag(
+    input: CreateFileTagInput,
+  ): Promise<FileTag | undefined> {
+    const row = await this.db
+      .selectFrom("file_tags")
+      .selectAll()
+      .where("owner_id", "=", input.ownerId)
+      .where("file_id", "=", input.fileId)
+      .where("tag_id", "=", input.tagId)
+      .executeTakeFirst();
+
+    return row ? fileTagRowToModel(row) : undefined;
   }
 }
