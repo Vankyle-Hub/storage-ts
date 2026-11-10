@@ -9,6 +9,13 @@ export interface StorageCapabilities {
   readonly signedPutUrl: boolean;
   readonly signedPartUrl: boolean;
   readonly serverSideCopy?: boolean | undefined;
+  /**
+   * Presigned upload URLs enforce the `contentLength` they were created
+   * with: the provider rejects a request body of any other size. Absent or
+   * `false` means `contentLength` is ignored when signing and the size is
+   * only verified by `completeUploadSession`.
+   */
+  readonly signedContentLength?: boolean | undefined;
 }
 
 // ── PutObject ──
@@ -134,6 +141,13 @@ export interface CreatePutUrlInput {
   readonly bucket: string;
   readonly objectKey: string;
   readonly contentType?: string | undefined;
+  /**
+   * Exact size of the request body in bytes. A provider that can bind it
+   * into the signature (`capabilities.signedContentLength`) issues a URL
+   * that only accepts a body of this size, so a client cannot upload more
+   * (or less) than it declared. Other providers ignore it.
+   */
+  readonly contentLength?: number | undefined;
   readonly expiresInSeconds?: number | undefined;
 }
 
@@ -142,5 +156,10 @@ export interface CreateUploadPartUrlInput {
   readonly objectKey: string;
   readonly providerUploadId: string;
   readonly partNumber: number;
+  /**
+   * Exact size of this part's request body in bytes; see
+   * {@link CreatePutUrlInput.contentLength}.
+   */
+  readonly contentLength?: number | undefined;
   readonly expiresInSeconds?: number | undefined;
 }

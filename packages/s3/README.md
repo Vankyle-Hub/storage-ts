@@ -78,6 +78,7 @@ const storage = new S3Storage({
 | `signedPutUrl` | ✓ |
 | `signedPartUrl` | ✓ |
 | `serverSideCopy` | ✗ |
+| `signedContentLength` | ✓ |
 
 All four URL types use `@aws-sdk/s3-request-presigner`.
 
@@ -86,6 +87,13 @@ All four URL types use `@aws-sdk/s3-request-presigner`.
 passed to S3 as `response-content-disposition` and `response-content-type`
 query parameters on the presigned URL, so S3 sets those response headers on the
 eventual GET.
+
+`createPutUrl` and `createUploadPartUrl` accept an optional `contentLength`.
+When it is given, `content-length` is a signed header of the URL: an upload
+whose body has any other size is rejected with `403 SignatureDoesNotMatch`
+and nothing is stored. Clients need no change — browsers and HTTP clients send
+`Content-Length` themselves. Without `contentLength` the URL accepts a body of
+any size. `Content-Type` is not part of the signature.
 
 ## Options reference
 

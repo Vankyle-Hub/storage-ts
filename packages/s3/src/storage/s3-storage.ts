@@ -49,6 +49,7 @@ export class S3Storage implements IStorage {
     signedReadUrl: true,
     signedPutUrl: true,
     signedPartUrl: true,
+    signedContentLength: true,
   };
 
   private readonly client: S3Client;
@@ -240,10 +241,14 @@ export class S3Storage implements IStorage {
 
   async createPutUrl(input: CreatePutUrlInput): Promise<SignedAccess> {
     const expiresIn = input.expiresInSeconds ?? DEFAULT_EXPIRES_IN;
+    // With ContentLength set, the presigner makes `content-length` a signed
+    // header: S3 then rejects (403 SignatureDoesNotMatch) a request whose
+    // body has any other size. Without it the URL accepts any size.
     const command = new PutObjectCommand({
       Bucket: input.bucket,
       Key: input.objectKey,
       ContentType: input.contentType,
+      ContentLength: input.contentLength,
     });
 
     const url = await getSignedUrl(this.client, command, { expiresIn });
@@ -264,6 +269,8 @@ export class S3Storage implements IStorage {
       Key: input.objectKey,
       UploadId: input.providerUploadId,
       PartNumber: input.partNumber,
+      // Signed like in createPutUrl: the part must have exactly this size.
+      ContentLength: input.contentLength,
     });
 
     const url = await getSignedUrl(this.client, command, { expiresIn });
