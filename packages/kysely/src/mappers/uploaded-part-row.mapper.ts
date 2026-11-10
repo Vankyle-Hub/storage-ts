@@ -2,6 +2,7 @@ import type { UploadedPart } from "@vankyle/storage-core";
 import type { JsonObject } from "@vankyle/storage-shared";
 import type { Selectable } from "kysely";
 import type { UploadedPartsTable } from "@/schema/database";
+import { ensureDate } from "@/mappers/timestamp";
 
 type UploadedPartRow = Selectable<UploadedPartsTable>;
 
@@ -22,8 +23,4 @@ export function uploadedPartRowToModel(row: UploadedPartRow): UploadedPart {
 function parseJson(value: string | null): JsonObject | undefined {
   if (value === null) return undefined;
   return JSON.parse(value) as JsonObject;
-}
-
-function ensureDate(value: Date | string): Date {
-  return typeof value === "string" ? new Date(value) : value;
 }

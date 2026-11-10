@@ -1,13 +1,13 @@
 # @vankyle/storage-kysely
 
-`IMetadataStore` implementation backed by [Kysely](https://kysely.dev/), supporting any Kysely-compatible SQL database.
+`IMetadataStore` implementation backed by [Kysely](https://kysely.dev/) for PostgreSQL, SQLite and Cloudflare D1.
 
 ## Supported databases
 
 - PostgreSQL
-- MySQL
-- SQL Server (MSSQL)
 - SQLite
+
+MySQL and SQL Server are **not supported**: the schema and the stores do not work there. See [docs/migrations.md](../../docs/migrations.md#unsupported-databases).
 - Cloudflare D1 (via `D1Dialect` from `@vankyle/storage-cloudflare`)
 
 ## Installation
@@ -16,7 +16,7 @@
 pnpm add @vankyle/storage-kysely kysely @vankyle/storage-core @vankyle/storage-shared
 ```
 
-Add your database driver (e.g. `pg`, `mysql2`, `better-sqlite3`) as needed.
+Add your database driver (e.g. `pg`, `better-sqlite3`) as needed.
 
 ## Usage
 
@@ -45,7 +45,7 @@ const service = new DefaultStorageService({ storage, metadata, bucket: "..." });
 
 ## Database schema
 
-Six tables are created by the included migration:
+Six tables are created by the included migrations:
 
 | Table | Description |
 |---|---|
@@ -67,17 +67,15 @@ Six tables are created by the included migration:
 
 ## Running migrations
 
-`@vankyle/storage-kysely` exports a `migrations` object compatible with the [Kysely `Migrator`](https://kysely.dev/docs/migrations):
+`@vankyle/storage-kysely` exports `createMigrationProvider(dbType, options?)` for the [Kysely `Migrator`](https://kysely.dev/docs/migrations). `dbType` is `"postgres"` or `"sqlite"` (SQLite and D1):
 
 ```typescript
 import { Migrator } from "kysely";
-import { migrations } from "@vankyle/storage-kysely";
+import { createMigrationProvider } from "@vankyle/storage-kysely";
 
 const migrator = new Migrator({
   db,
-  provider: {
-    getMigrations: async () => migrations,
-  },
+  provider: createMigrationProvider("postgres"),
 });
 
 const { error, results } = await migrator.migrateToLatest();
@@ -90,6 +88,15 @@ if (error) {
   throw error;
 }
 ```
+
+| Migration | What it does |
+|---|---|
+| `0001_init` | Creates the tables and indexes |
+| `0002_timestamptz` | Makes every time column an unambiguous instant: `timestamptz` on PostgreSQL, ISO-8601 UTC text on SQLite/D1 |
+
+**Upgrading an existing PostgreSQL database from 0.4.x:** `0002_timestamptz` converts existing values and must be told which time zone they were written in (`createMigrationProvider("postgres", { timestampSourceTimeZone: "Asia/Shanghai" })`, default `"UTC"`). See [docs/migrations.md](../../docs/migrations.md#migration-0002--time-zone-aware-timestamps) for how to choose the value and how to verify the result.
+
+Use `generateMigrationSql(key, dbType, options?)` / `generateAllMigrationSql(dbType, options?)` to get the SQL as text.
 
 ## TypeScript schema type
 
@@ -126,4 +133,6 @@ Some columns store JSON as text (`metadata`, `providerSessionData`, `providerPar
 
 ## SQLite date handling
 
-SQLite returns `DATE` / `DATETIME` columns as strings. Row mappers convert them to `Date` objects via an `ensureDate()` helper. This is handled transparently — application code always receives `Date` values.
+SQLite has no date type; time columns are `text` and come back as strings. Row mappers convert them to `Date` objects. The canonical stored format is ISO-8601 UTC (`2026-01-31T08:00:00.000Z`); a value without a zone designator, such as the `CURRENT_TIMESTAMP` default's `2026-01-31 08:00:00`, is read as UTC.
+
+SQLite drivers and D1 cannot bind a JavaScript `Date`, so `Date` parameters must be serialized to that format on the way in (for example with a Kysely plugin). See [docs/migrations.md](../../docs/migrations.md#timestamp-storage-on-sqlite-and-d1).

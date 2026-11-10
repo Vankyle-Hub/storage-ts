@@ -20,4 +20,4 @@ export {
   generateMigrationSql,
   generateAllMigrationSql,
 } from "@/migrations/index";
-export type { DatabaseType } from "@/migrations/index";
+export type { DatabaseType, MigrationOptions } from "@/migrations/index";

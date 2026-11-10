@@ -15,7 +15,8 @@ import {
   type QueryCompiler,
   type QueryResult,
 } from "kysely";
-import type { DatabaseType } from "./types";
+import { ValidationError } from "@vankyle/storage-shared";
+import type { DatabaseType, MigrationOptions } from "./types";
 import { createMigrations } from "./index";
 
 class SqlCollector {
@@ -71,19 +72,31 @@ function makeCollectingDialect(
   };
 }
 
+/**
+ * Returns the `up` SQL of one migration as a plain string, statements
+ * separated by `;` and a blank line.
+ *
+ * @param options Same as for `createMigrations`; e.g. the source time zone
+ *   baked into the PostgreSQL SQL of `0002_timestamptz`.
+ * @throws ValidationError (`field: "migrationKey"`) for an unknown key.
+ */
 export async function generateMigrationSql(
   migrationKey: string,
   dbType: DatabaseType,
+  options?: MigrationOptions,
 ): Promise<string> {
   const collector = new SqlCollector();
   const db = new Kysely<unknown>({
     dialect: makeCollectingDialect(dbType, collector),
   });
   try {
-    const migrations = createMigrations(dbType);
+    const migrations = createMigrations(dbType, options);
     const migration = migrations[migrationKey];
     if (!migration) {
-      throw new Error(`Unknown migration key: '${migrationKey}'`);
+      throw new ValidationError(
+        `Unknown migration key: '${migrationKey}'`,
+        "migrationKey",
+      );
     }
     await migration.up(db);
     return collector.statements.join(";\n\n") + ";";
@@ -92,12 +105,14 @@ export async function generateMigrationSql(
   }
 }
 
+/** `generateMigrationSql` for every migration, keyed by migration name. */
 export async function generateAllMigrationSql(
   dbType: DatabaseType,
+  options?: MigrationOptions,
 ): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
-  for (const key of Object.keys(createMigrations(dbType))) {
-    result[key] = await generateMigrationSql(key, dbType);
+  for (const key of Object.keys(createMigrations(dbType, options))) {
+    result[key] = await generateMigrationSql(key, dbType, options);
   }
   return result;
 }

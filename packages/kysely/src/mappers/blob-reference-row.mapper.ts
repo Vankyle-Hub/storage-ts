@@ -1,6 +1,7 @@
 import type { BlobReference } from "@vankyle/storage-core";
 import type { Selectable } from "kysely";
 import type { BlobReferencesTable } from "@/schema/database";
+import { ensureDate } from "@/mappers/timestamp";
 
 type BlobReferenceRow = Selectable<BlobReferencesTable>;
 
@@ -12,8 +13,4 @@ export function blobReferenceRowToModel(row: BlobReferenceRow): BlobReference {
     refId: row.ref_id,
     createdAt: ensureDate(row.created_at),
   };
-}
-
-function ensureDate(value: Date | string): Date {
-  return typeof value === "string" ? new Date(value) : value;
 }
