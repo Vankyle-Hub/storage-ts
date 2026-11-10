@@ -93,7 +93,7 @@ const db = new Kysely<StorageDatabase>({
 });
 ```
 
-Everything else is identical to the PostgreSQL example.
+Everything else is identical to the PostgreSQL example, except that migrations take the `"mysql"` database type. MySQL support currently has known gaps — see [migrations.md](migrations.md#databasetype).
 
 ---
 
@@ -342,7 +342,9 @@ Orphaned blobs (blobs with no remaining references) are marked with `BlobStatus.
 
 ## Running database migrations
 
-Migrations are database-type-aware. Pass `'postgres'` or `'sqlite'` to get DDL that matches your database's type system. For a full reference see [migrations.md](migrations.md).
+Migrations are database-type-aware. Pass `'postgres'`, `'mysql'`, or `'sqlite'` to get DDL that matches your database's type system. For a full reference see [migrations.md](migrations.md).
+
+> **Upgrading from 0.4.x on PostgreSQL?** Migration `0002_timestamptz` converts the time columns to `timestamptz` and needs to know which time zone the existing values were written in. Read [Migration 0002](migrations.md#migration-0002--time-zone-aware-timestamps) before running `migrateToLatest()` against a database that already holds data.
 
 ### PostgreSQL / MySQL / SQLite
 
@@ -358,7 +360,15 @@ const migrator = new Migrator({
 const { error, results } = await migrator.migrateToLatest();
 ```
 
-For MySQL or standard SQLite pass `"postgres"` or `"sqlite"` respectively.
+For MySQL or standard SQLite pass `"mysql"` or `"sqlite"` respectively. (Up to 0.4.x MySQL used `"postgres"`.)
+
+If the existing PostgreSQL data was written by processes running in a zone other than UTC, pass it once, for the run that applies `0002`:
+
+```typescript
+provider: createMigrationProvider("postgres", {
+  timestampSourceTimeZone: "Asia/Shanghai",
+}),
+```
 
 ### Cloudflare D1 — programmatic
 

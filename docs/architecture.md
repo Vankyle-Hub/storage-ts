@@ -92,12 +92,16 @@ Adapters for the Cloudflare Workers runtime:
 
 `IMetadataStore` implementation powered by [Kysely](https://kysely.dev/):
 
-- Works with PostgreSQL, MySQL, SQL Server, SQLite, and Cloudflare D1 (via `D1Dialect`)
+- Works with PostgreSQL, SQLite, and Cloudflare D1 (via `D1Dialect`); MySQL has its own migration type but known gaps — see [migrations.md](migrations.md#databasetype)
 - Contains table schema types (`StorageDatabase`), row mappers, and Kysely query implementations for all six stores
-- Provides database-type-aware migration factories via `createMigrations(dbType)` and `createMigrationProvider(dbType)`
-  - `'postgres'` — uses `varchar(n)`, `bigint`, `timestamp` for PostgreSQL (and MySQL / SQL Server)
-  - `'sqlite'` — uses `text`, `integer` for SQLite and Cloudflare D1
-- Provides `generateMigrationSql(key, dbType)` / `generateAllMigrationSql(dbType)` to emit plain SQL strings (useful for generating `wrangler d1 migrations apply` scripts at build time)
+- Provides database-type-aware migration factories via `createMigrations(dbType, options?)` and `createMigrationProvider(dbType, options?)`
+  - `'postgres'` — `varchar(n)`, `bigint`; time columns are `timestamptz` (after `0002_timestamptz`)
+  - `'mysql'` — `varchar(n)`, `bigint`, `timestamp` (stored by MySQL as a UTC instant)
+  - `'sqlite'` — `text`, `integer` for SQLite and Cloudflare D1; time columns are ISO-8601 UTC text
+- Provides `generateMigrationSql(key, dbType, options?)` / `generateAllMigrationSql(dbType, options?)` to emit plain SQL strings (useful for generating `wrangler d1 migrations apply` scripts at build time)
+- Shipped migrations are frozen; their SQL is pinned by fixtures and checked in tests
+
+Time values are instants everywhere: the domain models use `Date`, and every metadata backend stores them in a time-zone-unambiguous form (`timestamptz`, MySQL `TIMESTAMP`, ISO-8601 UTC text, Cosmos ISO strings). No stored value depends on the time zone of the process that wrote it.
 
 ---
 
@@ -418,7 +422,7 @@ Use `cloudflare` only when you are running inside a Cloudflare Worker and have a
 
 | Scenario | Package |
 |---|---|
-| PostgreSQL, MySQL, SQL Server, SQLite | `kysely` |
+| PostgreSQL, SQLite (MySQL: see [migrations.md](migrations.md#databasetype)) | `kysely` |
 | Cloudflare D1 | `kysely` + `D1Dialect` from `cloudflare` |
 | Azure Cosmos DB | `azure` |
 

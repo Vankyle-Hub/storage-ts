@@ -201,7 +201,7 @@ Providers that lack a capability report `false`; the move executor falls back pe
 
 ### 2.10 Metadata schema changes
 
-New columns on the blob entity/table (details in §3.2): `tier`, `tier_status`, `tier_changed_at`, `last_accessed_at`, `access_count`, `tier_pinned`. Kysely ships migration `0002_tiering` for both database flavors (`postgres`, `sqlite`); Cosmos updates its blob mapper (schemaless, no migration op). Indexes: `(tier, last_accessed_at)` for candidate scans; `tier_status` for crash recovery.
+New columns on the blob entity/table (details in §3.2): `tier`, `tier_status`, `tier_changed_at`, `last_accessed_at`, `access_count`, `tier_pinned`. Kysely ships migration `0003_tiering` (`0002` is `0002_timestamptz`) for every database type (`postgres`, `mysql`, `sqlite`), with new time columns created time-zone-aware as described in [migrations.md](migrations.md#adding-future-migrations); Cosmos updates its blob mapper (schemaless, no migration op). Indexes: `(tier, last_accessed_at)` for candidate scans; `tier_status` for crash recovery.
 
 `IBlobStore` gains two queries (§3.3); `updateBlob` gains the ability to write tracking fields without bumping `updatedAt`.
 
@@ -407,7 +407,7 @@ Provider matrix for the new capabilities:
 
 - All contracts in §3.1–§3.8 implemented; `pnpm build`, `pnpm typecheck`, `pnpm exec vitest run` green.
 - Unit tests with fake `IStorage`/`IMetadataStore` cover: coalesced tracking (window math, `touch: false`, failure swallowing), hysteresis policy boundaries, the move state machine including mid-move crash recovery, facade delegation on/off, and all construction validations.
-- Kysely migration `0002_tiering` emits correct SQL for both `postgres` and `sqlite`; Cosmos mapper round-trips new fields.
+- Kysely migration `0003_tiering` emits correct SQL for both `postgres` and `sqlite`; Cosmos mapper round-trips new fields.
 - Non-tiered behavior regression-tested: no tracking writes, single-bucket flow byte-identical.
 - `docs/architecture.md` gains a tiering section; `docs/getting-started.md` gains a tiered-configuration example; `CHANGELOG.md` updated.
 
@@ -420,7 +420,7 @@ Provider matrix for the new capabilities:
 Packages: `core`, `kysely`, `azure`.
 
 1. Extend the `Blob` domain model and zod schema (§3.2); add tier enums/constants (§3.1).
-2. Kysely: migration `0002_tiering` (columns with defaults, `(tier, last_accessed_at)` and `tier_status` indexes; both flavors), blob row mapper, `updateBlob` `touch` support, `findDemotionCandidates`, `listBlobsByTierStatus`.
+2. Kysely: migration `0003_tiering` (columns with defaults, `(tier, last_accessed_at)` and `tier_status` indexes; both flavors), blob row mapper, `updateBlob` `touch` support, `findDemotionCandidates`, `listBlobsByTierStatus`.
 3. Azure: Cosmos blob mapper and store methods.
 4. Tests: schema round-trips, generated SQL snapshots, query behavior against SQLite.
 
