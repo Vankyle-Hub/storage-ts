@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.1
+
+### Security
+
+- `@vankyle/storage-core` requires `zod` `^4.6.6` (was `^4.3.6`). Earlier
+  4.x versions can exhaust memory while validating oversized constrained
+  collections. Applications whose lockfile pins an older `zod` get the fix
+  when they update. (#68)
+
+No API change and no database migration. All packages are versioned
+together, so every package is published as 0.6.1; only
+`@vankyle/storage-core` differs from 0.6.0.
+
 ## 0.6.0
 
 This release contains breaking changes. Read the upgrade notes before
