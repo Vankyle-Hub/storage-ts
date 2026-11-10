@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.5.0
+
+This release contains breaking changes. Read the upgrade notes before
+updating from 0.4.x.
+
+### Breaking changes
+
+- **`IStorageService` has a new required method, `uploadObject`.** Custom
+  implementations of the interface must add it. (#46)
+- **`uploadPart` and `getUploadPartUrl` reject single-mode sessions with
+  `ValidationError` (`field: "mode"`)** instead of `MetadataNotFoundError`.
+  (#46)
+- **MySQL has its own database type.** Pass `"mysql"` where you passed
+  `"postgres"` for MySQL (`createMigrations`, `createMigrationProvider`,
+  `generateMigrationSql`, `generateAllMigrationSql`). (#48)
+- **New migration `0002_timestamptz`.** `migrateToLatest()` now also converts
+  the time columns: `timestamp` → `timestamptz` on PostgreSQL, with existing
+  values converted using a source time zone you may need to supply. (#48)
+- **Zone-less SQLite/D1 timestamp text is read as UTC**, not in the process's
+  local time zone. (#48)
+- **`generateMigrationSql` throws `ValidationError`** (`field:
+  "migrationKey"`) for an unknown key instead of a plain `Error`. (#48)
+- SQL Server is no longer listed as supported by the bundled migrations.
+
+### Added
+
+- `IStorageService.uploadObject({ sessionId, body, contentLength? })` — a
+  server-side write for single-mode upload sessions, backed by
+  `IStorage.putObject`. The single-mode flow is `createUploadSession` →
+  `uploadObject` → `completeUploadSession`, which makes single mode usable
+  when the server already holds the bytes and with providers that cannot issue
+  presigned PUT URLs (R2 binding). (#46)
+- `UploadSizeMismatchError` (`UPLOAD_SIZE_MISMATCH`) and
+  `UploadEtagMismatchError` (`UPLOAD_ETAG_MISMATCH`) in
+  `@vankyle/storage-shared`, carrying `sessionId`, `expected` and `actual`.
+  `completeUploadSession` throws them instead of plain `Error`s; the messages
+  are unchanged. (#47)
+- `MigrationOptions.timestampSourceTimeZone` (default `"UTC"`) for
+  `createMigrations`, `createMigrationProvider`, `generateMigrationSql` and
+  `generateAllMigrationSql`. (#48)
+- `generateMigrationSql` / `generateAllMigrationSql` emit `0002_timestamptz`
+  and support the `"mysql"` type. (#48)
+
+### Fixed
+
+- `docs/getting-started.md` no longer says that R2 binding single-mode uploads
+  are relayed through `uploadPart`, which never worked. (#46)
+
+### Upgrade notes
+
+1. **Code.** If you implement `IStorageService` yourself, add `uploadObject`.
+   If you catch `MetadataNotFoundError` from `uploadPart` / `getUploadPartUrl`
+   to detect single-mode sessions, catch `ValidationError` instead. If you use
+   MySQL, change the database type to `"mysql"`.
+2. **PostgreSQL with existing data.** Before the first `migrateToLatest()` on
+   0.5.0, decide which time zone the existing rows were written in — the time
+   zone of the application processes, not of the database server — and pass it
+   as `createMigrationProvider("postgres", { timestampSourceTimeZone })`. The
+   default is `"UTC"`. The migration rewrites the six tables under an
+   exclusive lock. Afterwards, verify by sampling `blobs.created_at` against
+   the objects' `LastModified`. Full procedure:
+   [docs/migrations.md](docs/migrations.md#migration-0002--time-zone-aware-timestamps).
+3. **SQLite / D1.** Regenerate and apply the migration SQL; `0002` only
+   normalizes the text format of existing values and needs no time zone.
+4. **Projects that keep their own copy of the migration SQL.** `0001_init` is
+   unchanged. Generate `0002_timestamptz` with `generateMigrationSql`; for
+   PostgreSQL the source time zone is baked into the SQL, and the SQL must be
+   applied exactly once.
+
+### Known limitations
+
+- MySQL is not usable end to end (#52), and the Kysely stores cannot bind
+  `Date` parameters on SQLite/D1 without application-side serialization (#53).
+  Both predate this release.
+
 ## 0.4.1
 
 - Removed the `node:crypto` dependency from `@vankyle/storage-core` ID
